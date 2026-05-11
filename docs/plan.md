@@ -797,17 +797,19 @@ sudo cat $AGENT_HOME/api_keys/t_secret.key
 
 ### 7.1 애플리케이션 파일 배치
 
-```bash
-# 제공 Python 앱 복사 (예: agent_app.py)
-# agent_app.py를 $AGENT_HOME에 배치
+미션에서 제공된 바이너리 파일(`docs/agent-app`)을 `$AGENT_HOME`에 복사합니다.  
+`agent-app`은 PyInstaller로 패키징된 Linux x86-64 ELF 실행 파일로, Python 런타임이 내장되어 있습니다.
 
-cp agent_app.py $AGENT_HOME/
+```bash
+# 제공된 바이너리를 $AGENT_HOME에 복사
+# (컨테이너 내에서, 호스트 ~/auto-monitoring/docs/agent-app 이 마운트된 경로 기준)
+cp /home/agent-admin/src/../docs/agent-app $AGENT_HOME/agent-app
 
 # 실행 권한 부여
-chmod +x $AGENT_HOME/agent_app.py
+chmod +x $AGENT_HOME/agent-app
 
 # 검증
-ls -la $AGENT_HOME/agent_app.py
+ls -la $AGENT_HOME/agent-app
 ```
 
 ### 7.2 애플리케이션 실행
@@ -821,7 +823,7 @@ source /etc/profile.d/agent-app.sh
 
 # 애플리케이션 시작
 cd $AGENT_HOME
-python3 agent_app.py
+./agent-app
 
 # 기대 결과:
 # [OK] Boot sequence step 1: ...
@@ -878,69 +880,67 @@ source /etc/profile.d/agent-app.sh
 TIMESTAMP=$(date '+%Y-%m-%d %H:%M:%S')
 LOG_FILE="${AGENT_LOG_DIR}/monitor.log"
 
+# 임계값
+CPU_THRESHOLD=20
+MEM_THRESHOLD=10
+DISK_THRESHOLD=80
+
+# 로그 용량 관리 설정
+LOG_MAX_SIZE=$((10 * 1024 * 1024))  # 10MB
+LOG_MAX_FILES=10
+
 # ===== 3. 함수 정의 =====
 
-# Health Check 함수들
 check_process() {
-    if pgrep -f "agent_app.py" > /dev/null; then
-        return 0
-    else
-        return 1
-    fi
+    pgrep -f "agent-app" > /dev/null
 }
 
 check_port() {
-    if ss -tulnp | grep -q ":${AGENT_PORT}.*LISTEN"; then
-        return 0
-    else
-        return 1
-    fi
+    ss -tulnp | grep -q ":${AGENT_PORT}.*LISTEN"
 }
 
-# Warning Check 함수
 check_firewall() {
-    if sudo ufw status | grep -q "Status: active"; then
-        return 0
-    else
-        return 1
-    fi
+    sudo ufw status | grep -q "Status: active"
 }
 
-# 자원 수집 함수들
+get_pid() {
+    pgrep -f "agent-app" | head -1
+}
+
 get_cpu_usage() {
-    # CPU 사용률 수집 (%)
-    top -bn1 | grep "Cpu(s)" | awk '{print $2}'
+    top -bn1 | grep "Cpu(s)" | awk '{print $2}' | tr -d '%'
 }
 
 get_memory_usage() {
-    # 메모리 사용률 수집 (%)
-    free | grep Mem | awk '{printf("%.2f", $3/$2 * 100.0)}'
+    free | grep Mem | awk '{printf("%.1f", $3/$2 * 100.0)}'
 }
 
 get_disk_usage() {
-    # 디스크 사용률 수집 (%)
-    df $AGENT_HOME | tail -1 | awk '{print $5}'
+    # Root partition 기준 (요구사항: Root partition, Used %)
+    df / | tail -1 | awk '{print $5}' | tr -d '%'
 }
 
-get_network_status() {
-    # 네트워크 연결 상태 수집
-    ss -s | grep -E "TCP:|UDP:" | head -2
-}
-
-get_active_processes() {
-    # 활성 프로세스 수
-    ps aux | wc -l
+rotate_log() {
+    [ -f "$LOG_FILE" ] || return 0
+    local size
+    size=$(stat -c%s "$LOG_FILE" 2>/dev/null || echo 0)
+    if [ "$size" -ge "$LOG_MAX_SIZE" ]; then
+        local i
+        for i in $(seq $((LOG_MAX_FILES - 1)) -1 1); do
+            [ -f "${LOG_FILE}.${i}" ] && mv "${LOG_FILE}.${i}" "${LOG_FILE}.$((i + 1))"
+        done
+        [ -f "${LOG_FILE}.${LOG_MAX_FILES}" ] && rm -f "${LOG_FILE}.${LOG_MAX_FILES}"
+        mv "$LOG_FILE" "${LOG_FILE}.1"
+    fi
 }
 
 # ===== 4. Health Check (실패 시 exit 1) =====
 
-# 프로세스 확인
 if ! check_process; then
-    echo "[ERROR] ${TIMESTAMP} | Process agent_app.py is not running" >> "$LOG_FILE"
+    echo "[ERROR] ${TIMESTAMP} | Process agent-app is not running" >> "$LOG_FILE"
     exit 1
 fi
 
-# 포트 확인
 if ! check_port; then
     echo "[ERROR] ${TIMESTAMP} | Port ${AGENT_PORT}/tcp is not LISTEN" >> "$LOG_FILE"
     exit 1
@@ -948,25 +948,37 @@ fi
 
 # ===== 5. Warning Check (경고만 출력, 계속 진행) =====
 
-# 방화벽 확인
 if ! check_firewall; then
     echo "[WARNING] ${TIMESTAMP} | Firewall is not active" >> "$LOG_FILE"
 fi
 
-# ===== 6. 자원 수집 및 로깅 =====
+# ===== 6. 자원 수집 =====
 
+APP_PID=$(get_pid)
 CPU_USAGE=$(get_cpu_usage)
 MEMORY_USAGE=$(get_memory_usage)
 DISK_USAGE=$(get_disk_usage)
-PROCESS_COUNT=$(get_active_processes)
 
-# 로그 기록
-log_entry="[OK] ${TIMESTAMP} | CPU: ${CPU_USAGE} | Memory: ${MEMORY_USAGE}% | Disk: ${DISK_USAGE} | Process: ${PROCESS_COUNT}"
-echo "$log_entry" >> "$LOG_FILE"
+# ===== 7. 임계값 경고 (경고만 출력, 계속 진행) =====
 
-# 네트워크 상태도 함께 기록 (선택)
-# echo "[INFO] ${TIMESTAMP} | Network Status:" >> "$LOG_FILE"
-# get_network_status >> "$LOG_FILE"
+if awk "BEGIN{exit !($CPU_USAGE > $CPU_THRESHOLD)}"; then
+    echo "[WARNING] ${TIMESTAMP} | CPU threshold exceeded (${CPU_USAGE}% > ${CPU_THRESHOLD}%)" >> "$LOG_FILE"
+fi
+
+if awk "BEGIN{exit !($MEMORY_USAGE > $MEM_THRESHOLD)}"; then
+    echo "[WARNING] ${TIMESTAMP} | MEM threshold exceeded (${MEMORY_USAGE}% > ${MEM_THRESHOLD}%)" >> "$LOG_FILE"
+fi
+
+if [ "$DISK_USAGE" -gt "$DISK_THRESHOLD" ]; then
+    echo "[WARNING] ${TIMESTAMP} | DISK threshold exceeded (${DISK_USAGE}% > ${DISK_THRESHOLD}%)" >> "$LOG_FILE"
+fi
+
+# ===== 8. 로그 회전 후 기록 =====
+
+rotate_log
+
+# 로그 포맷: [YYYY-MM-DD HH:MM:SS] PID:... CPU:..% MEM:..% DISK_USED:..%
+echo "[${TIMESTAMP}] PID:${APP_PID} CPU:${CPU_USAGE}% MEM:${MEMORY_USAGE}% DISK_USED:${DISK_USAGE}%" >> "$LOG_FILE"
 
 echo "Monitoring completed at ${TIMESTAMP}"
 exit 0
@@ -1003,9 +1015,35 @@ $AGENT_HOME/bin/monitor.sh
 
 # 로그 확인
 tail -5 $AGENT_LOG_DIR/monitor.log
+
+# 기대 결과 예시 (로그 포맷):
+# [2026-02-25 13:58:01] PID:48291 CPU:10.2% MEM:3.2% DISK_USED:23%
 ```
 
 **목표**: Monitor.sh 스크립트 정상 작동 및 로그 생성 확인
+
+---
+
+### 8.4 Cron 실행을 위한 sudoers 설정
+
+monitor.sh 내부에서 `sudo ufw status`를 사용하므로, cron 비대화형 환경에서 패스워드 프롬프트 없이 실행 가능하도록 설정합니다.
+
+```bash
+# sudoers 편집 (visudo 필수 - 문법 오류 방지)
+sudo visudo -f /etc/sudoers.d/agent-monitor
+
+# 아래 내용 추가:
+# agent-admin ALL=(ALL) NOPASSWD: /usr/sbin/ufw status
+```
+
+```bash
+# 검증: agent-admin으로 전환 후 패스워드 없이 실행되는지 확인
+su - agent-admin
+sudo ufw status
+# 패스워드 입력 없이 결과가 출력되면 성공
+```
+
+**목표**: cron 환경에서 sudo ufw status 무인 실행 가능
 
 ---
 
@@ -1112,7 +1150,7 @@ echo "8. Monitor.sh Permissions:"
 ls -la /home/agent-admin/agent-app/bin/monitor.sh
 echo ""
 
-# 9. Monitor 로그 확인
+# 9. Monitor 로그 확인 (포맷: [YYYY-MM-DD HH:MM:SS] PID:... CPU:..% MEM:..% DISK_USED:..%)
 echo "9. Monitor Log:"
 tail -10 /var/log/agent-app/monitor.log
 echo ""
@@ -1120,6 +1158,12 @@ echo ""
 # 10. Crontab 확인
 echo "10. Crontab (agent-admin):"
 sudo crontab -u agent-admin -l
+echo ""
+
+# 11. 로그 용량 관리 설정 확인
+echo "11. Log Rotation Settings:"
+ls -lh /var/log/agent-app/monitor.log* 2>/dev/null || echo "No rotated logs yet"
+sudo cat /etc/sudoers.d/agent-monitor 2>/dev/null || echo "sudoers entry not found"
 echo ""
 
 echo "========== End of Verification =========="
@@ -1154,7 +1198,7 @@ echo "========== End of Verification =========="
 - [ ] **Phase 5**: 환경 변수 설정
 - [ ] **Phase 6**: API 키 파일 생성
 - [ ] **Phase 7**: 애플리케이션 배포 및 실행
-- [ ] **Phase 8**: Monitor.sh 스크립트 개발
+- [ ] **Phase 8**: Monitor.sh 스크립트 개발 (임계값 경고, 로그 포맷, 로그 rotation, sudoers 설정 포함)
 - [ ] **Phase 9**: Crontab 자동화 설정
 - [ ] **Phase 10**: 최종 검증 및 문서화
 
@@ -1250,8 +1294,10 @@ sudo chown agent-admin:agent-core /var/log/agent-app
 6. ✅ 애플리케이션 부팅 5단계 [OK] 및 "Agent READY" 출력
 7. ✅ 포트 15034 LISTEN 상태 확인
 8. ✅ Monitor.sh 정상 실행 및 로그 생성
-9. ✅ Monitor 로그 누적 기록 확인 (최근 라인)
-10. ✅ Crontab 자동 실행 확인 (1분 후 로그 증가)
+9. ✅ Monitor 로그 포맷 확인: `[YYYY-MM-DD HH:MM:SS] PID:... CPU:..% MEM:..% DISK_USED:..%`
+10. ✅ 임계값 초과 시 [WARNING] 출력 확인 (CPU>20%, MEM>10%, DISK>80%)
+11. ✅ 로그 파일 용량 관리 설정 확인 (최대 10MB/10개 rotate_log 함수)
+12. ✅ Crontab 자동 실행 확인 (1분 후 로그 증가)
 
 ---
 

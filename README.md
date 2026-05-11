@@ -90,7 +90,7 @@ AGENT_LOG_DIR=/var/log/agent-app
 ## 📊 Monitor.sh 기능
 
 ### Health Check (실패 시 종료)
-1. **프로세스 확인**: agent_app.py 실행 여부 검증
+1. **프로세스 확인**: agent-app 실행 여부 검증
 2. **포트 확인**: TCP 15034 LISTEN 상태 검증
 
 ### 상태 점검 (경고만 출력)
@@ -136,6 +136,10 @@ auto-monitoring/
 ├── docker-compose.yml      # 컨테이너 실행 설정
 ├── src/                    # 실습용 스크립트 (plan.md 기반)
 │   └── setup.sh            # 자동화 설정 스크립트
+├── docs/
+│   ├── agent-app           # 미션 제공 바이너리 (PyInstaller, Linux x86-64)
+│   ├── MISSION.md
+│   └── plan.md
 └── README.md
 ```
 
@@ -328,6 +332,7 @@ docker info | grep "Operating System"
 │   └── setup.sh            # 자동화 설정 스크립트
 ├── logs/                   # 모니터링 로그 (호스트에 저장)
 ├── docs/
+│   ├── agent-app           # 미션 제공 바이너리 (PyInstaller, Linux x86-64)
 │   ├── MISSION.md
 │   ├── README.md
 │   └── plan.md
