@@ -1,7 +1,4 @@
 # Implementation Plan - 단계별 구현 가이드
-
-# Implementation Plan - 단계별 구현 가이드
-
 ---
 
 ## 📊 프로젝트 구현 로드맵
