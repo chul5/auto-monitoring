@@ -269,8 +269,6 @@ CMD ["/usr/sbin/sshd", "-D"]
 파일 위치: `~/auto-monitoring/docker-compose.yml`
 
 ```yaml
-version: '3.8'
-
 services:
   linux-practice:
     build:

@@ -201,8 +201,6 @@ CMD ["/usr/sbin/sshd", "-D"]
 
 [docker-compose.yml](docker-compose.yml)
 ```yaml
-version: '3.8'
-
 services:
   linux-practice:
     build: .
