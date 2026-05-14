@@ -1,0 +1,33 @@
+version: '3.8'
+
+services:
+  linux-practice:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: auto-monitoring-lab
+    image: auto-monitoring:latest
+    
+    # 포트 매핑
+    ports:
+      - "20022:20022"    # SSH 포트
+      - "15034:15034"    # 애플리케이션 포트
+    
+    # 볼륨 마운트
+    volumes:
+      - ./src:/home/agent-admin/src      # 호스트 스크립트
+      - ./logs:/var/log/agent-app        # 로그 영속성
+    
+    # 환경 변수
+    environment:
+      - AGENT_HOME=/home/agent-admin/agent-app
+      - AGENT_PORT=15034
+      - AGENT_LOG_DIR=/var/log/agent-app
+    
+    # 옵션
+    privileged: true                      # systemctl 사용
+    stdin_open: true
+    tty: true
+    
+    # 복구 정책
+    restart: unless-stopped

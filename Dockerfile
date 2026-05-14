@@ -40,7 +40,9 @@ RUN useradd -m -s /bin/bash -g agent-common agent-dev && \
 RUN useradd -m -s /bin/bash -g agent-common agent-test
 
 # 환경 변수 설정
-RUN mkdir -p /home/agent-admin/agent-app/{bin,upload_files,api_keys}
+RUN mkdir -p /home/agent-admin/agent-app/bin \
+    && mkdir -p /home/agent-admin/agent-app/upload_files \
+    && mkdir -p /home/agent-admin/agent-app/api_keys
 ENV AGENT_HOME=/home/agent-admin/agent-app
 ENV AGENT_PORT=15034
 ENV AGENT_UPLOAD_DIR=$AGENT_HOME/upload_files
