@@ -414,11 +414,12 @@ id agent-test
 # uid=1003(agent-test) gid=1002(agent-common) groups=1002(agent-common)
 
 # 4. 디렉토리 구조 확인 (Dockerfile에서 생성됨)
-ls -la ~/agent-app
-tree ~/agent-app  # 설치되어 있으면
+# 주의: root로 접속 시 ~ 는 /root를 가리키므로 절대 경로 사용
+ls -la /home/agent-admin/agent-app
+# agent-admin으로 전환 후라면: ls -la ~/agent-app
 
 # 기대 결과:
-# ~/agent-app/
+# /home/agent-admin/agent-app/
 # ├── bin/
 # ├── upload_files/
 # └── api_keys/
