@@ -61,4 +61,4 @@ RUN chmod 770 $AGENT_HOME/upload_files && \
 EXPOSE 20022 15034
 
 # SSH 서버 시작
-CMD ["/usr/sbin/sshd", "-D"]
+CMD ["/usr/sbin/sshd", "-D", "-e"]
