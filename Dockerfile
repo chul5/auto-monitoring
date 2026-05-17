@@ -39,6 +39,11 @@ RUN useradd -m -s /bin/bash -g agent-common agent-dev && \
 
 RUN useradd -m -s /bin/bash -g agent-common agent-test
 
+# 계정 비밀번호 설정
+RUN echo "agent-admin:qwe123" | chpasswd && \
+    echo "agent-dev:qwe123" | chpasswd && \
+    echo "agent-test:qwe123" | chpasswd
+
 # 환경 변수 설정
 RUN mkdir -p /home/agent-admin/agent-app/bin \
     && mkdir -p /home/agent-admin/agent-app/upload_files \
