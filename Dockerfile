@@ -54,6 +54,8 @@ ENV AGENT_UPLOAD_DIR=$AGENT_HOME/upload_files
 ENV AGENT_KEY_PATH=$AGENT_HOME/api_keys/t_secret.key
 ENV AGENT_LOG_DIR=/var/log/agent-app
 
+RUN echo "export AGENT_HOME=${AGENT_HOME}\nexport AGENT_PORT=${AGENT_PORT}\nexport AGENT_UPLOAD_DIR=${AGENT_UPLOAD_DIR}\nexport AGENT_KEY_PATH=${AGENT_KEY_PATH}\nexport AGENT_LOG_DIR=${AGENT_LOG_DIR}" > /etc/profile.d/agent-app.sh
+
 # 디렉토리 권한 설정
 RUN chmod 770 $AGENT_HOME/upload_files && \
     chmod 770 $AGENT_HOME/api_keys && \
