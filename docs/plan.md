@@ -240,7 +240,7 @@ sudo cat $AGENT_KEY_PATH
 ```bash
 # 호스트 docs/agent-app → 컨테이너 $AGENT_HOME 으로 복사
 # (컨테이너 안에서, docs는 src 경로 기준)
-cp /home/agent-admin/src/../docs/agent-app $AGENT_HOME/agent-app
+cp /home/agent-admin/src/agent-app $AGENT_HOME/agent-app
 chmod +x $AGENT_HOME/agent-app
 
 ls -la $AGENT_HOME/agent-app
