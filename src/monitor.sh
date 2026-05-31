@@ -19,7 +19,7 @@ check_process() {
 }
 
 check_port() {
-    ss -tulnp | grep -q ":${AGENT_PORT}.*LISTEN"
+    ss -tlnp | grep -q ":${AGENT_PORT}"
 }
 
 check_firewall() {

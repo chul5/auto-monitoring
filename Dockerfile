@@ -1,4 +1,4 @@
-FROM ubuntu:22.04
+FROM ubuntu:24.04
 
 # 패키지 업데이트
 RUN apt-get update && apt-get install -y \
@@ -13,6 +13,7 @@ RUN apt-get update && apt-get install -y \
     iproute2 \
     ufw \
     systemctl \
+    cron \
     python3 \
     python3-pip \
     git \

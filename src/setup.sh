@@ -24,7 +24,7 @@ ufw status numbered
 echo ""
 echo "====== Phase 2: API 키 파일 생성 ======"
 echo "agent_api_key_test" > "$AGENT_KEY_PATH"
-chmod 600 "$AGENT_KEY_PATH"
+chmod 640 "$AGENT_KEY_PATH"
 chown agent-dev:agent-core "$AGENT_KEY_PATH"
 ls -l "$AGENT_KEY_PATH"
 
@@ -50,7 +50,7 @@ echo "[OK] /etc/sudoers.d/agent-monitor"
 
 echo ""
 echo "====== Phase 5: Cron 서비스 시작 및 crontab 등록 ======"
-service cron start || service cron restart
+service cron start
 # 절대경로 사용 (cron은 환경변수 미상속)
 MONITOR_CRON="* * * * * /home/agent-admin/agent-app/bin/monitor.sh"
 echo "$MONITOR_CRON" | su - agent-admin -c 'crontab -'
