@@ -4,10 +4,14 @@
 
 ## 역할 분담 구조
 
-| 구분 | 처리 위치 | 항목 |
-|------|-----------|------|
-| **Dockerfile** | 빌드 시 자동 | 패키지 설치, SSH 설정, 계정/그룹 생성, 디렉토리/권한, 환경변수, 비밀번호 |
-| **컨테이너 안** | 직접 수행 | UFW 방화벽, API 키 파일, 앱 실행, monitor.sh 개발, crontab 등록 |
+| 구분 | 처리 위치 | 항목 | MISSION.md |
+|------|-----------|------|------------|
+| **Dockerfile** | 빌드 시 자동 | 패키지 설치, SSH 설정, 계정/그룹 생성, 디렉토리/권한, 환경변수, 비밀번호 | §4-1(SSH), §4-2, §4-3(환경변수) |
+| **setup.sh** | `docker-compose up` 후 1회 실행 | UFW 방화벽, API 키 파일, 앱 바이너리 배치, monitor.sh 배치, sudoers, crontab | §4-1(UFW), §4-2(키파일), §4-3(키파일), §4-4(cron) |
+| **수동** | 직접 수행 | 앱 실행 및 Boot Sequence 확인 | §4-3(앱 실행), §2-1 체크리스트 5 |
+
+> **setup.sh 위치**: `src/setup.sh` (볼륨 마운트 → 컨테이너 내 `/home/agent-admin/src/setup.sh`)  
+> **UFW 주의**: UFW는 시스템 전역 서비스이므로 계정 전환 후에도 active 상태 유지. 단, 컨테이너 재시작 시 초기화되므로 setup.sh 재실행 필요.
 
 ---
 
@@ -19,15 +23,24 @@
 ~/auto-monitoring/
 ├── Dockerfile
 ├── docker-compose.yml
-├── src/                    # 컨테이너에 마운트 (/home/agent-admin/src)
-├── logs/                   # 로그 영속성 (/var/log/agent-app)
+├── src/                         # 컨테이너에 마운트 (/home/agent-admin/src)
+│   ├── agent-app                # 제공 바이너리 (PyInstaller, Linux x86-64)
+│   ├── setup.sh                 # ← docker-compose up 후 1회 실행 스크립트
+│   └── monitor.sh               # ← 시스템 모니터링 스크립트 본체
+├── logs/                        # 로그 영속성 (/var/log/agent-app) ← 반드시 사전 생성
 └── docs/
-    ├── agent-app           # 제공 바이너리 (PyInstaller, Linux x86-64)
     ├── MISSION.md
     └── plan.md
 ```
 
+> `logs/` 디렉토리는 docker-compose 볼륨 마운트 대상이므로 **빌드 전에** 반드시 생성해야 한다.
+
 ### 0.2 Dockerfile
+
+<!-- MISSION §4-1: SSH 포트 20022 변경, Root 원격 로그인 차단 -->
+<!-- MISSION §4-2: 계정(agent-admin/dev/test), 그룹(agent-common/agent-core) 생성 -->
+<!-- MISSION §4-2: 디렉토리 구조($AGENT_HOME/upload_files, api_keys, bin) 및 ACL 권한 -->
+<!-- MISSION §4-3: 환경변수(AGENT_HOME, AGENT_PORT, AGENT_UPLOAD_DIR, AGENT_KEY_PATH, AGENT_LOG_DIR) -->
 
 ```dockerfile
 FROM ubuntu:22.04
@@ -41,14 +54,14 @@ RUN apt-get update && apt-get install -y \
 RUN mkdir -p /run/sshd
 RUN mkdir -p /var/log/agent-app
 
-# SSH 포트 20022, Root 로그인 차단
+# SSH 포트 20022, Root 로그인 차단  [MISSION §4-1 SSH 설정]
 RUN sed -i 's/#Port 22/Port 20022/' /etc/ssh/sshd_config
 RUN echo 'PermitRootLogin no' >> /etc/ssh/sshd_config
 
-# 그룹 생성
+# 그룹 생성  [MISSION §4-2 생성 그룹]
 RUN groupadd -f agent-common && groupadd -f agent-core
 
-# 사용자 생성
+# 사용자 생성  [MISSION §4-2 생성 계정]
 RUN useradd -m -s /bin/bash -g agent-common agent-admin && \
     usermod -aG agent-core agent-admin && \
     usermod -aG sudo agent-admin
@@ -66,14 +79,22 @@ RUN mkdir -p /home/agent-admin/agent-app/bin \
     && mkdir -p /home/agent-admin/agent-app/upload_files \
     && mkdir -p /home/agent-admin/agent-app/api_keys
 
+# 환경변수 설정  [MISSION §4-3 환경변수]
 ENV AGENT_HOME=/home/agent-admin/agent-app
 ENV AGENT_PORT=15034
 ENV AGENT_UPLOAD_DIR=$AGENT_HOME/upload_files
 ENV AGENT_KEY_PATH=$AGENT_HOME/api_keys/t_secret.key
 ENV AGENT_LOG_DIR=/var/log/agent-app
 
-# 디렉토리 권한 설정
-RUN chmod 770 $AGENT_HOME/upload_files && \
+RUN echo "export AGENT_HOME=${AGENT_HOME}\nexport AGENT_PORT=${AGENT_PORT}\nexport AGENT_UPLOAD_DIR=${AGENT_UPLOAD_DIR}\nexport AGENT_KEY_PATH=${AGENT_KEY_PATH}\nexport AGENT_LOG_DIR=${AGENT_LOG_DIR}" > /etc/profile.d/agent-app.sh
+
+# 디렉토리 권한 설정  [MISSION §4-2 접근 권한]
+# $AGENT_HOME, $AGENT_HOME/bin은 RUN mkdir로 생성 시 root:root → 명시적 chown 필요
+RUN chown agent-admin:agent-common $AGENT_HOME && \
+    chown agent-dev:agent-core $AGENT_HOME/bin && \
+    chmod 755 $AGENT_HOME && \
+    chmod 750 $AGENT_HOME/bin && \
+    chmod 770 $AGENT_HOME/upload_files && \
     chmod 770 $AGENT_HOME/api_keys && \
     chmod 770 $AGENT_LOG_DIR && \
     chown -R agent-admin:agent-common $AGENT_HOME/upload_files && \
@@ -100,7 +121,7 @@ services:
       - "20022:20022"    # SSH 포트
       - "15034:15034"    # 애플리케이션 포트
     volumes:
-      - ./src:/home/agent-admin/src      # 호스트 스크립트
+      - ./src:/home/agent-admin/src      # 호스트 스크립트 (setup.sh, monitor.sh, agent-app)
       - ./logs:/var/log/agent-app        # 로그 영속성
     environment:
       - AGENT_HOME=/home/agent-admin/agent-app
@@ -117,6 +138,9 @@ services:
 ```bash
 cd ~/auto-monitoring
 
+# logs/ 디렉토리 사전 생성 (볼륨 마운트 대상)
+mkdir -p logs
+
 # 빌드 및 실행
 docker-compose up -d --build
 
@@ -129,19 +153,19 @@ docker-compose logs linux-practice
 # 기대 결과: Server listening on 0.0.0.0 port 20022.
 ```
 
-### 0.5 컨테이너 접속 및 초기 검증
+### 0.5 컨테이너 초기 검증
 
 ```bash
 # 컨테이너 접속 (root로 진입)
 docker-compose exec linux-practice bash
 
-# SSH 설정 확인
+# SSH 설정 확인  [MISSION §2-1 체크리스트 1]
 grep -E "^Port|^PermitRootLogin" /etc/ssh/sshd_config
 # 기대 결과:
 # Port 20022
 # PermitRootLogin no
 
-# 계정 확인
+# 계정 확인  [MISSION §2-1 체크리스트 3]
 id agent-admin
 id agent-dev
 id agent-test
@@ -150,110 +174,78 @@ id agent-test
 # uid=1002(agent-dev)   gid=1002(agent-common) groups=...,1003(agent-core)
 # uid=1003(agent-test)  gid=1002(agent-common) groups=...
 
-# 디렉토리/권한 확인 (root 접속 시 절대경로 사용)
+# 디렉토리/권한 확인  [MISSION §2-1 체크리스트 4]
+ls -ld /home/agent-admin/agent-app           # agent-admin:agent-common 755
+ls -ld /home/agent-admin/agent-app/bin       # agent-dev:agent-core 750
 ls -ld /home/agent-admin/agent-app/upload_files
 ls -ld /home/agent-admin/agent-app/api_keys
 ls -ld /var/log/agent-app
-# 기대 결과: drwxrwx--- ... agent-admin agent-common (upload_files)
-#           drwxrwx--- ... agent-dev   agent-core   (api_keys)
-#           drwxrwx--- ... agent-admin agent-core   (agent-app)
 
 # 환경변수 확인
 echo "AGENT_HOME=$AGENT_HOME"
 echo "AGENT_PORT=$AGENT_PORT"
 echo "AGENT_LOG_DIR=$AGENT_LOG_DIR"
+```
 
-# sudo 동작 확인 (agent-admin으로 전환)
+---
+
+## Phase 1–5: setup.sh 일괄 실행
+
+<!-- MISSION §4-1: UFW 방화벽 20022/tcp, 15034/tcp 허용 -->
+<!-- MISSION §4-2: API 키 파일 경로/권한 -->
+<!-- MISSION §4-3: 키 파일 생성(agent_api_key_test), 앱 바이너리 배치 -->
+<!-- MISSION §4-4: monitor.sh 배치/권한(750, agent-dev:agent-core), sudoers, crontab 매분 등록 -->
+
+`docker-compose up -d --build` 이후 아래 명령 한 번으로 Phase 1~5를 완료한다.
+
+```bash
+docker-compose exec linux-practice bash /home/agent-admin/src/setup.sh
+```
+
+setup.sh가 처리하는 항목:
+
+| Phase | 항목 | MISSION.md |
+|-------|------|------------|
+| 1 | UFW 방화벽 활성화 (20022/tcp, 15034/tcp) | §4-1 방화벽 설정, §2-1 체크리스트 2 |
+| 2 | API 키 파일 생성 (`agent_api_key_test`, 600, agent-dev:agent-core) | §4-3 키 파일 생성 |
+| 3 | agent-app 바이너리 src/ → $AGENT_HOME 배치 | §4-3 앱 실행 환경 |
+| 4 | monitor.sh 배치 (750, agent-dev:agent-core) + sudoers 설정 | §4-4 파일 위치/권한 정책 |
+| 5 | cron 서비스 시작 + agent-admin crontab 매분 등록 | §4-4 자동 실행(cron) 설정 |
+
+실행 후 확인:
+
+```bash
+# 방화벽  [MISSION §2-1 체크리스트 2]
+docker-compose exec linux-practice ufw status numbered
+
+# API 키 파일  [MISSION §4-3]
+docker-compose exec linux-practice ls -l /home/agent-admin/agent-app/api_keys/t_secret.key
+
+# monitor.sh 권한  [MISSION §2-1 체크리스트 6]
+docker-compose exec linux-practice ls -la /home/agent-admin/agent-app/bin/monitor.sh
+
+# crontab  [MISSION §2-1 체크리스트 8]
+docker-compose exec -u agent-admin linux-practice crontab -l
+```
+
+---
+
+## Phase 6: 애플리케이션 실행 (수동)
+
+<!-- MISSION §4-3: 루트 실행 금지, Boot Sequence 5단계 [OK], Agent READY 출력, 0.0.0.0:15034 LISTEN -->
+<!-- MISSION §2-1 체크리스트 5: Boot Sequence 5단계 [OK] 및 "Agent READY" 확인 내역 -->
+
+setup.sh가 처리하지 않는 유일한 수동 단계. Boot Sequence 출력이 체크리스트 증거이므로 직접 확인해야 한다.
+
+```bash
+# agent-admin으로 전환 (루트 실행 금지)
 su - agent-admin
-sudo whoami   # 비밀번호: qwe123 → 기대 결과: root
-```
 
-### 0.6 호스트에서 SSH 접속 테스트 (선택)
-
-```bash
-ssh -p 20022 agent-admin@localhost
-# 비밀번호: qwe123
-
-whoami   # 기대 결과: agent-admin
-exit
-```
-
----
-
-## Phase 1: UFW 방화벽 설정
-
-> 컨테이너 안에서 수행. UFW는 런타임에 활성화해야 하므로 Dockerfile로 처리 불가.
-
-```bash
-# 컨테이너 접속 후 agent-admin으로 전환
-docker-compose exec linux-practice bash
-su - agent-admin
-
-# 기본 정책 설정
-sudo ufw default deny incoming
-sudo ufw default allow outgoing
-
-# 필요 포트만 개방 (순서 중요: 활성화 전에 반드시 설정)
-sudo ufw allow 20022/tcp   # SSH
-sudo ufw allow 15034/tcp   # APP
-
-# UFW 활성화
-sudo ufw enable
-
-# 검증
-sudo ufw status numbered
-# 기대 결과:
-#      To                         Action      From
-#      --                         ------      ----
-# [ 1] 20022/tcp                  ALLOW IN    Anywhere
-# [ 2] 15034/tcp                  ALLOW IN    Anywhere
-```
-
----
-
-## Phase 2: API 키 파일 생성
-
-```bash
-# agent-admin 계정에서 수행
-echo "agent_api_key_test" | sudo tee $AGENT_KEY_PATH > /dev/null
-
-# 권한 설정
-sudo chmod 600 $AGENT_KEY_PATH
-sudo chown agent-dev:agent-core $AGENT_KEY_PATH
-
-# 검증
-ls -l $AGENT_KEY_PATH
-# 기대 결과: -rw------- ... agent-dev agent-core ... t_secret.key
-
-sudo cat $AGENT_KEY_PATH
-# 기대 결과: agent_api_key_test
-```
-
----
-
-## Phase 3: 애플리케이션 배포 및 실행
-
-### 3.1 바이너리 배치
-
-`docs/agent-app`은 PyInstaller로 패키징된 Linux x86-64 ELF 실행 파일입니다.
-
-```bash
-# 호스트 docs/agent-app → 컨테이너 $AGENT_HOME 으로 복사
-# (컨테이너 안에서, docs는 src 경로 기준)
-cp /home/agent-admin/src/agent-app $AGENT_HOME/agent-app
-chmod +x $AGENT_HOME/agent-app
-
-ls -la $AGENT_HOME/agent-app
-```
-
-### 3.2 앱 실행
-
-```bash
-# agent-admin 계정에서 실행 (루트 금지)
+# 앱 실행
 cd $AGENT_HOME
 ./agent-app
 
-# 기대 결과:
+# 기대 출력:
 # Starting Agent Boot Sequence...
 # [1/5] Checking User Account               [OK]
 # [2/5] Verifying Environment Variables     [OK]
@@ -265,224 +257,36 @@ cd $AGENT_HOME
 # Agent READY
 ```
 
-### 3.3 포트 리슨 확인 (다른 터미널)
+포트 리슨 확인 (다른 터미널):
 
 ```bash
+# [MISSION §2-1 체크리스트 5]
 ss -tulnp | grep 15034
-# 기대 결과: tcp LISTEN 0.0.0.0:15034 ... python3
-
-curl http://localhost:15034/
+# 기대 결과: tcp LISTEN 0.0.0.0:15034
 ```
 
 ---
 
-## Phase 4: monitor.sh 개발
+## Phase 7: 자동 실행 검증
 
-### 4.1 파일 위치/권한 정책
-
-| 항목 | 값 |
-|------|----|
-| 경로 | `$AGENT_HOME/bin/monitor.sh` |
-| 소유자 | `agent-dev` |
-| 그룹 | `agent-core` |
-| 권한 | `750` (rwxr-x---) |
-| cron 실행 계정 | `agent-admin` |
-
-### 4.2 스크립트 구조
-
-```bash
-#!/bin/bash
-set -euo pipefail
-
-# ===== 환경 변수 로드 =====
-source /etc/profile.d/agent-app.sh
-
-# ===== 변수 정의 =====
-TIMESTAMP=$(date '+%Y-%m-%d %H:%M:%S')
-LOG_FILE="${AGENT_LOG_DIR}/monitor.log"
-
-CPU_THRESHOLD=20
-MEM_THRESHOLD=10
-DISK_THRESHOLD=80
-
-LOG_MAX_SIZE=$((10 * 1024 * 1024))  # 10MB
-LOG_MAX_FILES=10
-
-# ===== 함수 정의 =====
-
-check_process() {
-    pgrep -f "agent-app" > /dev/null
-}
-
-check_port() {
-    ss -tulnp | grep -q ":${AGENT_PORT}.*LISTEN"
-}
-
-check_firewall() {
-    sudo ufw status | grep -q "Status: active"
-}
-
-get_pid() {
-    pgrep -f "agent-app" | head -1
-}
-
-get_cpu_usage() {
-    top -bn1 | grep "%Cpu" | awk '{print $2}' | tr -d '%'
-}
-
-get_memory_usage() {
-    free | grep Mem | awk '{printf("%.1f", $3/$2 * 100.0)}'
-}
-
-get_disk_usage() {
-    df / | tail -1 | awk '{print $5}' | tr -d '%'
-}
-
-rotate_log() {
-    [ -f "$LOG_FILE" ] || return 0
-    local size
-    size=$(stat -c%s "$LOG_FILE" 2>/dev/null || echo 0)
-    if [ "$size" -ge "$LOG_MAX_SIZE" ]; then
-        local i
-        for i in $(seq $((LOG_MAX_FILES - 1)) -1 1); do
-            [ -f "${LOG_FILE}.${i}" ] && mv "${LOG_FILE}.${i}" "${LOG_FILE}.$((i + 1))"
-        done
-        [ -f "${LOG_FILE}.${LOG_MAX_FILES}" ] && rm -f "${LOG_FILE}.${LOG_MAX_FILES}"
-        mv "$LOG_FILE" "${LOG_FILE}.1"
-    fi
-}
-
-# ===== Health Check (실패 시 exit 1) =====
-
-if ! check_process; then
-    echo "[ERROR] ${TIMESTAMP} | Process agent-app is not running" >> "$LOG_FILE"
-    exit 1
-fi
-
-if ! check_port; then
-    echo "[ERROR] ${TIMESTAMP} | Port ${AGENT_PORT}/tcp is not LISTEN" >> "$LOG_FILE"
-    exit 1
-fi
-
-# ===== Warning Check (경고만, 계속 진행) =====
-
-if ! check_firewall; then
-    echo "[WARNING] ${TIMESTAMP} | Firewall is not active" >> "$LOG_FILE"
-fi
-
-# ===== 자원 수집 =====
-
-APP_PID=$(get_pid)
-CPU_USAGE=$(get_cpu_usage)
-MEMORY_USAGE=$(get_memory_usage)
-DISK_USAGE=$(get_disk_usage)
-
-# ===== 임계값 경고 =====
-
-if awk "BEGIN{exit !($CPU_USAGE > $CPU_THRESHOLD)}"; then
-    echo "[WARNING] ${TIMESTAMP} | CPU threshold exceeded (${CPU_USAGE}% > ${CPU_THRESHOLD}%)" >> "$LOG_FILE"
-fi
-
-if awk "BEGIN{exit !($MEMORY_USAGE > $MEM_THRESHOLD)}"; then
-    echo "[WARNING] ${TIMESTAMP} | MEM threshold exceeded (${MEMORY_USAGE}% > ${MEM_THRESHOLD}%)" >> "$LOG_FILE"
-fi
-
-if [ "$DISK_USAGE" -gt "$DISK_THRESHOLD" ]; then
-    echo "[WARNING] ${TIMESTAMP} | DISK threshold exceeded (${DISK_USAGE}% > ${DISK_THRESHOLD}%)" >> "$LOG_FILE"
-fi
-
-# ===== 로그 회전 후 기록 =====
-
-rotate_log
-
-echo "[${TIMESTAMP}] PID:${APP_PID} CPU:${CPU_USAGE}% MEM:${MEMORY_USAGE}% DISK_USED:${DISK_USAGE}%" >> "$LOG_FILE"
-
-echo "Monitoring completed at ${TIMESTAMP}"
-exit 0
-```
-
-### 4.3 배치 및 권한 설정
-
-```bash
-# 스크립트 생성
-cat > $AGENT_HOME/bin/monitor.sh << 'EOF'
-# (위 스크립트 내용)
-EOF
-
-chmod 750 $AGENT_HOME/bin/monitor.sh
-sudo chown agent-dev:agent-core $AGENT_HOME/bin/monitor.sh
-
-# 검증
-ls -la $AGENT_HOME/bin/monitor.sh
-# 기대 결과: -rwxr-x--- ... agent-dev agent-core ... monitor.sh
-```
-
-### 4.4 sudoers 설정 (cron 무인 실행용)
-
-`monitor.sh`에서 `sudo ufw status`를 사용하므로, cron 비대화형 환경에서 패스워드 없이 실행되도록 설정합니다.
-
-```bash
-sudo visudo -f /etc/sudoers.d/agent-monitor
-# 아래 내용 추가:
-# agent-admin ALL=(ALL) NOPASSWD: /usr/sbin/ufw status
-```
-
-```bash
-# 검증: 패스워드 없이 실행되는지 확인
-sudo ufw status
-# 패스워드 프롬프트 없이 결과 출력되면 성공
-```
-
-### 4.5 테스트
-
-```bash
-# agent-admin으로 실행
-$AGENT_HOME/bin/monitor.sh
-
-# 로그 확인
-tail -5 $AGENT_LOG_DIR/monitor.log
-# 기대 결과:
-# [2026-05-17 12:00:01] PID:1234 CPU:5.0% MEM:3.2% DISK_USED:23%
-```
-
----
-
-## Phase 5: Crontab 자동화 설정
-
-```bash
-# agent-admin 계정에서 수행
-su - agent-admin
-
-# cron 데몬 시작 (Docker 컨테이너는 자동 시작 안 됨)
-sudo service cron start
-sudo service cron status   # 기대 결과: cron is running
-
-# crontab 등록
-crontab -e
-# 아래 라인 추가 (매분 실행):
-* * * * * /home/agent-admin/agent-app/bin/monitor.sh >> /var/log/agent-app/monitor.log 2>&1
-
-# 등록 확인
-crontab -l
-```
-
-### 자동 실행 검증
+<!-- MISSION §4-4 자동 실행(cron) 설정: 등록 후 1~2분 내 monitor.log 누적 확인 -->
+<!-- MISSION §2-1 체크리스트 7, 8 -->
 
 ```bash
 # 현재 로그 라인 수 저장
-wc -l $AGENT_LOG_DIR/monitor.log
+wc -l /var/log/agent-app/monitor.log
 
-# 1분 대기 후 재확인 (라인 수 증가 여부)
+# 1분 대기 후 재확인 (라인 수 증가 여부)  [MISSION §2-1 체크리스트 8]
 sleep 70
-wc -l $AGENT_LOG_DIR/monitor.log
+wc -l /var/log/agent-app/monitor.log
 
-# 실시간 확인 (호스트에서)
+# 실시간 확인 (호스트에서)  [MISSION §2-1 체크리스트 7]
 tail -f ~/auto-monitoring/logs/monitor.log
 ```
 
 ---
 
-## Phase 6: 최종 검증
+## Phase 8: 최종 검증
 
 ```bash
 #!/bin/bash
@@ -490,21 +294,23 @@ tail -f ~/auto-monitoring/logs/monitor.log
 
 echo "========== Final Verification =========="
 
-echo "1. SSH Configuration:"
+echo "1. SSH Configuration:"          # [MISSION §2-1 체크리스트 1]
 grep -E "^Port|^PermitRootLogin" /etc/ssh/sshd_config
 
 echo "2. SSH Port Listening:"
 ss -tulnp | grep ssh
 
-echo "3. Firewall Status:"
-sudo ufw status verbose
+echo "3. Firewall Status:"            # [MISSION §2-1 체크리스트 2]
+ufw status verbose
 
-echo "4. User Accounts:"
+echo "4. User Accounts:"             # [MISSION §2-1 체크리스트 3]
 id agent-admin
 id agent-dev
 id agent-test
 
-echo "5. Directory Permissions:"
+echo "5. Directory Permissions:"     # [MISSION §2-1 체크리스트 4]
+ls -ld /home/agent-admin/agent-app
+ls -ld /home/agent-admin/agent-app/bin
 ls -ld /home/agent-admin/agent-app/upload_files
 ls -ld /home/agent-admin/agent-app/api_keys
 ls -ld /var/log/agent-app
@@ -512,17 +318,17 @@ ls -ld /var/log/agent-app
 echo "6. API Key File:"
 ls -la $AGENT_KEY_PATH
 
-echo "7. Application Port (15034):"
+echo "7. Application Port (15034):"  # [MISSION §2-1 체크리스트 5]
 ss -tulnp | grep 15034
 
-echo "8. Monitor.sh Permissions:"
+echo "8. Monitor.sh Permissions:"    # [MISSION §4-4 파일 위치/권한 정책]
 ls -la $AGENT_HOME/bin/monitor.sh
 
-echo "9. Monitor Log (last 5 lines):"
+echo "9. Monitor Log (last 5 lines):" # [MISSION §2-1 체크리스트 7]
 tail -5 $AGENT_LOG_DIR/monitor.log
 
-echo "10. Crontab (agent-admin):"
-crontab -l
+echo "10. Crontab (agent-admin):"    # [MISSION §2-1 체크리스트 8]
+su - agent-admin -c 'crontab -l'
 
 echo "11. Log Rotation:"
 ls -lh $AGENT_LOG_DIR/monitor.log* 2>/dev/null || echo "No rotated logs yet"
@@ -543,19 +349,18 @@ sudo sshd -t
 sudo kill -HUP $(pgrep -f "sshd -D")
 ```
 
-### UFW 활성화 후 설정 복구
+### UFW 재시작 후 초기화
 
 ```bash
-# SSH 포트 허용 추가 후 리로드
-sudo ufw allow 20022/tcp
-sudo ufw reload
+# 컨테이너 재시작 시 UFW 상태 리셋됨 → setup.sh 재실행
+docker-compose exec linux-practice bash /home/agent-admin/src/setup.sh
 ```
 
 ### 환경변수 미인식
 
 ```bash
 # su - 로 전환하면 /etc/profile.d/agent-app.sh 자동 로드
-# 미로드 시 수동 소싱
+# cron 환경에서는 monitor.sh 내부에서 source로 로드
 source /etc/profile.d/agent-app.sh
 ```
 
@@ -563,18 +368,17 @@ source /etc/profile.d/agent-app.sh
 
 ```bash
 ls -ld /var/log/agent-app
-sudo chmod 770 /var/log/agent-app
-sudo chown agent-admin:agent-core /var/log/agent-app
+# 소유자/권한이 올바른지 확인: agent-admin:agent-core 770
+chmod 770 /var/log/agent-app
+chown agent-admin:agent-core /var/log/agent-app
 ```
 
 ---
 
 ## 구현 체크리스트
 
-- [ ] **Phase 0**: Docker 환경 구성 및 초기 검증
-- [ ] **Phase 1**: UFW 방화벽 설정 (20022, 15034)
-- [ ] **Phase 2**: API 키 파일 생성
-- [ ] **Phase 3**: 애플리케이션 배포 및 실행 (Boot Sequence 5단계 [OK])
-- [ ] **Phase 4**: monitor.sh 개발 (health check, 자원수집, 로그, sudoers)
-- [ ] **Phase 5**: Crontab 매분 실행 등록 및 자동 누적 확인
-- [ ] **Phase 6**: 최종 검증 및 수행 내역서 작성
+- [ ] **Phase 0**: Docker 환경 구성 및 초기 검증 (`docker-compose up -d --build`)
+- [ ] **Phase 1–5**: setup.sh 일괄 실행 (`docker-compose exec linux-practice bash /home/agent-admin/src/setup.sh`)
+- [ ] **Phase 6**: 애플리케이션 실행 및 Boot Sequence 5단계 [OK] 확인 (수동)
+- [ ] **Phase 7**: crontab 자동 실행 확인 (1분 후 monitor.log 라인 증가)
+- [ ] **Phase 8**: 최종 검증 및 수행 내역서 작성

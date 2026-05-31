@@ -57,7 +57,11 @@ ENV AGENT_LOG_DIR=/var/log/agent-app
 RUN echo "export AGENT_HOME=${AGENT_HOME}\nexport AGENT_PORT=${AGENT_PORT}\nexport AGENT_UPLOAD_DIR=${AGENT_UPLOAD_DIR}\nexport AGENT_KEY_PATH=${AGENT_KEY_PATH}\nexport AGENT_LOG_DIR=${AGENT_LOG_DIR}" > /etc/profile.d/agent-app.sh
 
 # 디렉토리 권한 설정
-RUN chmod 770 $AGENT_HOME/upload_files && \
+RUN chown agent-admin:agent-common $AGENT_HOME && \
+    chown agent-dev:agent-core $AGENT_HOME/bin && \
+    chmod 755 $AGENT_HOME && \
+    chmod 750 $AGENT_HOME/bin && \
+    chmod 770 $AGENT_HOME/upload_files && \
     chmod 770 $AGENT_HOME/api_keys && \
     chmod 770 $AGENT_LOG_DIR && \
     chown -R agent-admin:agent-common $AGENT_HOME/upload_files && \
