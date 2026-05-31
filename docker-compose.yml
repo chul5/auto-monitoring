@@ -1,5 +1,6 @@
 services:
   linux-practice:
+    platform: linux/amd64
     build:
       context: .
       dockerfile: Dockerfile
