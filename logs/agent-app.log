@@ -4301,3 +4301,209 @@ Agent READY
 2026-05-31 07:30:32,661 [INFO] --- Step Info: Mode=DOWN, CPU Lv=1, Mem=75MB ---
 2026-05-31 07:30:32,661 [INFO] [Memory] Decreasing... (-25 MB) Total: 50 MB
 2026-05-31 07:30:32,688 [INFO] [CPU] Level 1 workload completed. Duration: 0.03s
+2026-05-31 07:30:33,690 [INFO] --- Step Info: Mode=DOWN, CPU Lv=0, Mem=50MB ---
+2026-05-31 07:30:33,692 [INFO] [Memory] Decreasing... (-25 MB) Total: 25 MB
+2026-05-31 07:30:34,693 [INFO] --- Step Info: Mode=DOWN, CPU Lv=0, Mem=25MB ---
+2026-05-31 07:30:34,693 [INFO] [Memory] Decreasing... (-25 MB) Total: 0 MB
+2026-05-31 07:30:35,695 [INFO] >>> BOTTOM REACHED (Idle). Switching to RAMP UP. <<<
+2026-05-31 07:30:35,695 [INFO] --- Step Info: Mode=UP, CPU Lv=1, Mem=0MB ---
+2026-05-31 07:30:35,698 [INFO] [Memory] Increasing... (+25 MB) Total: 25 MB
+2026-05-31 07:30:35,725 [INFO] [CPU] Level 1 workload completed. Duration: 0.03s
+2026-05-31 07:30:36,726 [INFO] --- Step Info: Mode=UP, CPU Lv=2, Mem=25MB ---
+2026-05-31 07:30:36,731 [INFO] [Memory] Increasing... (+25 MB) Total: 50 MB
+2026-05-31 07:30:36,782 [INFO] [CPU] Level 2 workload completed. Duration: 0.05s
+2026-05-31 07:30:37,784 [INFO] --- Step Info: Mode=UP, CPU Lv=3, Mem=50MB ---
+2026-05-31 07:30:37,789 [INFO] [Memory] Increasing... (+25 MB) Total: 75 MB
+2026-05-31 07:30:37,875 [INFO] [CPU] Level 3 workload completed. Duration: 0.09s
+2026-05-31 07:30:38,877 [INFO] --- Step Info: Mode=UP, CPU Lv=4, Mem=75MB ---
+2026-05-31 07:30:38,882 [INFO] [Memory] Increasing... (+25 MB) Total: 100 MB
+2026-05-31 07:30:38,985 [INFO] [CPU] Level 4 workload completed. Duration: 0.10s
+2026-05-31 07:30:39,987 [INFO] --- Step Info: Mode=UP, CPU Lv=5, Mem=100MB ---
+2026-05-31 07:30:40,032 [INFO] [Memory] Increasing... (+25 MB) Total: 125 MB
+2026-05-31 07:30:40,165 [INFO] [CPU] Level 5 workload completed. Duration: 0.13s
+2026-05-31 07:30:41,166 [INFO] --- Step Info: Mode=UP, CPU Lv=6, Mem=125MB ---
+2026-05-31 07:30:41,204 [INFO] [Memory] Increasing... (+25 MB) Total: 150 MB
+2026-05-31 07:30:41,361 [INFO] [CPU] Level 6 workload completed. Duration: 0.16s
+2026-05-31 07:30:42,362 [INFO] --- Step Info: Mode=UP, CPU Lv=7, Mem=150MB ---
+2026-05-31 07:30:42,400 [INFO] [Memory] Increasing... (+25 MB) Total: 175 MB
+2026-05-31 07:30:42,579 [INFO] [CPU] Level 7 workload completed. Duration: 0.18s
+2026-05-31 07:30:43,580 [INFO] --- Step Info: Mode=UP, CPU Lv=8, Mem=175MB ---
+2026-05-31 07:30:43,619 [INFO] [Memory] Increasing... (+25 MB) Total: 200 MB
+2026-05-31 07:30:43,824 [INFO] [CPU] Level 8 workload completed. Duration: 0.20s
+2026-05-31 07:30:44,824 [INFO] --- Step Info: Mode=UP, CPU Lv=9, Mem=200MB ---
+2026-05-31 07:30:44,862 [INFO] [Memory] Increasing... (+25 MB) Total: 225 MB
+2026-05-31 07:30:45,093 [INFO] [CPU] Level 9 workload completed. Duration: 0.23s
+2026-05-31 07:30:46,094 [INFO] --- Step Info: Mode=UP, CPU Lv=10, Mem=225MB ---
+2026-05-31 07:30:46,132 [INFO] [Memory] Increasing... (+25 MB) Total: 250 MB
+2026-05-31 07:30:46,387 [INFO] [CPU] Level 10 workload completed. Duration: 0.25s
+2026-05-31 07:30:47,388 [INFO] --- Step Info: Mode=UP, CPU Lv=10, Mem=250MB ---
+2026-05-31 07:30:47,426 [INFO] [Memory] Increasing... (+25 MB) Total: 275 MB
+2026-05-31 07:30:47,690 [INFO] [CPU] Level 10 workload completed. Duration: 0.26s
+2026-05-31 07:30:48,692 [INFO] >>> PEAK REACHED. Switching to RAMP DOWN. <<<
+2026-05-31 07:30:48,692 [INFO] --- Step Info: Mode=DOWN, CPU Lv=9, Mem=275MB ---
+2026-05-31 07:30:48,692 [INFO] [Memory] Decreasing... (-25 MB) Total: 250 MB
+2026-05-31 07:30:48,926 [INFO] [CPU] Level 9 workload completed. Duration: 0.23s
+2026-05-31 07:30:49,927 [INFO] --- Step Info: Mode=DOWN, CPU Lv=8, Mem=250MB ---
+2026-05-31 07:30:49,929 [INFO] [Memory] Decreasing... (-25 MB) Total: 225 MB
+2026-05-31 07:30:50,135 [INFO] [CPU] Level 8 workload completed. Duration: 0.21s
+2026-05-31 07:30:51,138 [INFO] --- Step Info: Mode=DOWN, CPU Lv=7, Mem=225MB ---
+2026-05-31 07:30:51,138 [INFO] [Memory] Decreasing... (-25 MB) Total: 200 MB
+2026-05-31 07:30:51,319 [INFO] [CPU] Level 7 workload completed. Duration: 0.18s
+2026-05-31 07:30:52,321 [INFO] --- Step Info: Mode=DOWN, CPU Lv=6, Mem=200MB ---
+2026-05-31 07:30:52,323 [INFO] [Memory] Decreasing... (-25 MB) Total: 175 MB
+2026-05-31 07:30:52,478 [INFO] [CPU] Level 6 workload completed. Duration: 0.16s
+2026-05-31 07:30:53,479 [INFO] --- Step Info: Mode=DOWN, CPU Lv=5, Mem=175MB ---
+2026-05-31 07:30:53,480 [INFO] [Memory] Decreasing... (-25 MB) Total: 150 MB
+2026-05-31 07:30:53,610 [INFO] [CPU] Level 5 workload completed. Duration: 0.13s
+2026-05-31 07:30:54,611 [INFO] --- Step Info: Mode=DOWN, CPU Lv=4, Mem=150MB ---
+2026-05-31 07:30:54,613 [INFO] [Memory] Decreasing... (-25 MB) Total: 125 MB
+2026-05-31 07:30:54,716 [INFO] [CPU] Level 4 workload completed. Duration: 0.10s
+2026-05-31 07:30:55,718 [INFO] --- Step Info: Mode=DOWN, CPU Lv=3, Mem=125MB ---
+2026-05-31 07:30:55,718 [INFO] [Memory] Decreasing... (-25 MB) Total: 100 MB
+2026-05-31 07:30:55,796 [INFO] [CPU] Level 3 workload completed. Duration: 0.08s
+2026-05-31 07:30:56,797 [INFO] --- Step Info: Mode=DOWN, CPU Lv=2, Mem=100MB ---
+2026-05-31 07:30:56,799 [INFO] [Memory] Decreasing... (-25 MB) Total: 75 MB
+2026-05-31 07:30:56,852 [INFO] [CPU] Level 2 workload completed. Duration: 0.05s
+2026-05-31 07:30:57,853 [INFO] --- Step Info: Mode=DOWN, CPU Lv=1, Mem=75MB ---
+2026-05-31 07:30:57,854 [INFO] [Memory] Decreasing... (-25 MB) Total: 50 MB
+2026-05-31 07:30:57,882 [INFO] [CPU] Level 1 workload completed. Duration: 0.03s
+2026-05-31 07:30:58,882 [INFO] --- Step Info: Mode=DOWN, CPU Lv=0, Mem=50MB ---
+2026-05-31 07:30:58,884 [INFO] [Memory] Decreasing... (-25 MB) Total: 25 MB
+2026-05-31 07:30:59,886 [INFO] --- Step Info: Mode=DOWN, CPU Lv=0, Mem=25MB ---
+2026-05-31 07:30:59,886 [INFO] [Memory] Decreasing... (-25 MB) Total: 0 MB
+2026-05-31 07:31:00,888 [INFO] >>> BOTTOM REACHED (Idle). Switching to RAMP UP. <<<
+2026-05-31 07:31:00,889 [INFO] --- Step Info: Mode=UP, CPU Lv=1, Mem=0MB ---
+2026-05-31 07:31:00,891 [INFO] [Memory] Increasing... (+25 MB) Total: 25 MB
+2026-05-31 07:31:00,918 [INFO] [CPU] Level 1 workload completed. Duration: 0.03s
+2026-05-31 07:31:01,920 [INFO] --- Step Info: Mode=UP, CPU Lv=2, Mem=25MB ---
+2026-05-31 07:31:01,925 [INFO] [Memory] Increasing... (+25 MB) Total: 50 MB
+2026-05-31 07:31:01,982 [INFO] [CPU] Level 2 workload completed. Duration: 0.06s
+2026-05-31 07:31:02,984 [INFO] --- Step Info: Mode=UP, CPU Lv=3, Mem=50MB ---
+2026-05-31 07:31:02,988 [INFO] [Memory] Increasing... (+25 MB) Total: 75 MB
+2026-05-31 07:31:03,069 [INFO] [CPU] Level 3 workload completed. Duration: 0.08s
+2026-05-31 07:31:04,070 [INFO] --- Step Info: Mode=UP, CPU Lv=4, Mem=75MB ---
+2026-05-31 07:31:04,075 [INFO] [Memory] Increasing... (+25 MB) Total: 100 MB
+2026-05-31 07:31:04,177 [INFO] [CPU] Level 4 workload completed. Duration: 0.10s
+2026-05-31 07:31:05,179 [INFO] --- Step Info: Mode=UP, CPU Lv=5, Mem=100MB ---
+2026-05-31 07:31:05,216 [INFO] [Memory] Increasing... (+25 MB) Total: 125 MB
+2026-05-31 07:31:05,345 [INFO] [CPU] Level 5 workload completed. Duration: 0.13s
+2026-05-31 07:31:06,346 [INFO] --- Step Info: Mode=UP, CPU Lv=6, Mem=125MB ---
+2026-05-31 07:31:06,384 [INFO] [Memory] Increasing... (+25 MB) Total: 150 MB
+2026-05-31 07:31:06,538 [INFO] [CPU] Level 6 workload completed. Duration: 0.15s
+2026-05-31 07:31:07,540 [INFO] --- Step Info: Mode=UP, CPU Lv=7, Mem=150MB ---
+2026-05-31 07:31:07,578 [INFO] [Memory] Increasing... (+25 MB) Total: 175 MB
+2026-05-31 07:31:07,757 [INFO] [CPU] Level 7 workload completed. Duration: 0.18s
+2026-05-31 07:31:08,759 [INFO] --- Step Info: Mode=UP, CPU Lv=8, Mem=175MB ---
+2026-05-31 07:31:08,803 [INFO] [Memory] Increasing... (+25 MB) Total: 200 MB
+2026-05-31 07:31:09,020 [INFO] [CPU] Level 8 workload completed. Duration: 0.22s
+2026-05-31 07:31:10,022 [INFO] --- Step Info: Mode=UP, CPU Lv=9, Mem=200MB ---
+2026-05-31 07:31:10,060 [INFO] [Memory] Increasing... (+25 MB) Total: 225 MB
+2026-05-31 07:31:10,296 [INFO] [CPU] Level 9 workload completed. Duration: 0.24s
+2026-05-31 07:31:11,297 [INFO] --- Step Info: Mode=UP, CPU Lv=10, Mem=225MB ---
+2026-05-31 07:31:11,335 [INFO] [Memory] Increasing... (+25 MB) Total: 250 MB
+2026-05-31 07:31:11,599 [INFO] [CPU] Level 10 workload completed. Duration: 0.26s
+2026-05-31 07:31:12,601 [INFO] --- Step Info: Mode=UP, CPU Lv=10, Mem=250MB ---
+2026-05-31 07:31:12,637 [INFO] [Memory] Increasing... (+25 MB) Total: 275 MB
+2026-05-31 07:31:12,898 [INFO] [CPU] Level 10 workload completed. Duration: 0.26s
+2026-05-31 07:31:13,899 [INFO] >>> PEAK REACHED. Switching to RAMP DOWN. <<<
+2026-05-31 07:31:13,900 [INFO] --- Step Info: Mode=DOWN, CPU Lv=9, Mem=275MB ---
+2026-05-31 07:31:13,900 [INFO] [Memory] Decreasing... (-25 MB) Total: 250 MB
+2026-05-31 07:31:14,212 [INFO] [CPU] Level 9 workload completed. Duration: 0.31s
+2026-05-31 07:31:15,214 [INFO] --- Step Info: Mode=DOWN, CPU Lv=8, Mem=250MB ---
+2026-05-31 07:31:15,216 [INFO] [Memory] Decreasing... (-25 MB) Total: 225 MB
+2026-05-31 07:31:15,428 [INFO] [CPU] Level 8 workload completed. Duration: 0.21s
+2026-05-31 07:31:16,429 [INFO] --- Step Info: Mode=DOWN, CPU Lv=7, Mem=225MB ---
+2026-05-31 07:31:16,430 [INFO] [Memory] Decreasing... (-25 MB) Total: 200 MB
+2026-05-31 07:31:16,615 [INFO] [CPU] Level 7 workload completed. Duration: 0.18s
+2026-05-31 07:31:17,617 [INFO] --- Step Info: Mode=DOWN, CPU Lv=6, Mem=200MB ---
+2026-05-31 07:31:17,618 [INFO] [Memory] Decreasing... (-25 MB) Total: 175 MB
+2026-05-31 07:31:17,779 [INFO] [CPU] Level 6 workload completed. Duration: 0.16s
+2026-05-31 07:31:18,781 [INFO] --- Step Info: Mode=DOWN, CPU Lv=5, Mem=175MB ---
+2026-05-31 07:31:18,782 [INFO] [Memory] Decreasing... (-25 MB) Total: 150 MB
+2026-05-31 07:31:18,915 [INFO] [CPU] Level 5 workload completed. Duration: 0.13s
+2026-05-31 07:31:19,917 [INFO] --- Step Info: Mode=DOWN, CPU Lv=4, Mem=150MB ---
+2026-05-31 07:31:19,918 [INFO] [Memory] Decreasing... (-25 MB) Total: 125 MB
+2026-05-31 07:31:20,026 [INFO] [CPU] Level 4 workload completed. Duration: 0.11s
+2026-05-31 07:31:21,028 [INFO] --- Step Info: Mode=DOWN, CPU Lv=3, Mem=125MB ---
+2026-05-31 07:31:21,028 [INFO] [Memory] Decreasing... (-25 MB) Total: 100 MB
+2026-05-31 07:31:21,106 [INFO] [CPU] Level 3 workload completed. Duration: 0.08s
+2026-05-31 07:31:22,109 [INFO] --- Step Info: Mode=DOWN, CPU Lv=2, Mem=100MB ---
+2026-05-31 07:31:22,111 [INFO] [Memory] Decreasing... (-25 MB) Total: 75 MB
+2026-05-31 07:31:22,166 [INFO] [CPU] Level 2 workload completed. Duration: 0.05s
+2026-05-31 07:31:23,167 [INFO] --- Step Info: Mode=DOWN, CPU Lv=1, Mem=75MB ---
+2026-05-31 07:31:23,167 [INFO] [Memory] Decreasing... (-25 MB) Total: 50 MB
+2026-05-31 07:31:23,195 [INFO] [CPU] Level 1 workload completed. Duration: 0.03s
+2026-05-31 07:31:24,197 [INFO] --- Step Info: Mode=DOWN, CPU Lv=0, Mem=50MB ---
+2026-05-31 07:31:24,199 [INFO] [Memory] Decreasing... (-25 MB) Total: 25 MB
+2026-05-31 07:31:25,200 [INFO] --- Step Info: Mode=DOWN, CPU Lv=0, Mem=25MB ---
+2026-05-31 07:31:25,201 [INFO] [Memory] Decreasing... (-25 MB) Total: 0 MB
+2026-05-31 07:31:26,202 [INFO] >>> BOTTOM REACHED (Idle). Switching to RAMP UP. <<<
+2026-05-31 07:31:26,202 [INFO] --- Step Info: Mode=UP, CPU Lv=1, Mem=0MB ---
+2026-05-31 07:31:26,204 [INFO] [Memory] Increasing... (+25 MB) Total: 25 MB
+2026-05-31 07:31:26,230 [INFO] [CPU] Level 1 workload completed. Duration: 0.03s
+2026-05-31 07:31:27,231 [INFO] --- Step Info: Mode=UP, CPU Lv=2, Mem=25MB ---
+2026-05-31 07:31:27,235 [INFO] [Memory] Increasing... (+25 MB) Total: 50 MB
+2026-05-31 07:31:27,287 [INFO] [CPU] Level 2 workload completed. Duration: 0.05s
+2026-05-31 07:31:28,289 [INFO] --- Step Info: Mode=UP, CPU Lv=3, Mem=50MB ---
+2026-05-31 07:31:28,294 [INFO] [Memory] Increasing... (+25 MB) Total: 75 MB
+2026-05-31 07:31:28,370 [INFO] [CPU] Level 3 workload completed. Duration: 0.08s
+2026-05-31 07:31:29,371 [INFO] --- Step Info: Mode=UP, CPU Lv=4, Mem=75MB ---
+2026-05-31 07:31:29,376 [INFO] [Memory] Increasing... (+25 MB) Total: 100 MB
+2026-05-31 07:31:29,480 [INFO] [CPU] Level 4 workload completed. Duration: 0.10s
+2026-05-31 07:31:30,481 [INFO] --- Step Info: Mode=UP, CPU Lv=5, Mem=100MB ---
+2026-05-31 07:31:30,486 [INFO] [Memory] Increasing... (+25 MB) Total: 125 MB
+2026-05-31 07:31:30,628 [INFO] [CPU] Level 5 workload completed. Duration: 0.14s
+2026-05-31 07:31:31,629 [INFO] --- Step Info: Mode=UP, CPU Lv=6, Mem=125MB ---
+2026-05-31 07:31:31,668 [INFO] [Memory] Increasing... (+25 MB) Total: 150 MB
+2026-05-31 07:31:31,825 [INFO] [CPU] Level 6 workload completed. Duration: 0.16s
+2026-05-31 07:31:32,826 [INFO] --- Step Info: Mode=UP, CPU Lv=7, Mem=150MB ---
+2026-05-31 07:31:32,864 [INFO] [Memory] Increasing... (+25 MB) Total: 175 MB
+2026-05-31 07:31:33,049 [INFO] [CPU] Level 7 workload completed. Duration: 0.18s
+2026-05-31 07:31:34,050 [INFO] --- Step Info: Mode=UP, CPU Lv=8, Mem=175MB ---
+2026-05-31 07:31:34,087 [INFO] [Memory] Increasing... (+25 MB) Total: 200 MB
+2026-05-31 07:31:34,303 [INFO] [CPU] Level 8 workload completed. Duration: 0.22s
+2026-05-31 07:31:35,305 [INFO] --- Step Info: Mode=UP, CPU Lv=9, Mem=200MB ---
+2026-05-31 07:31:35,343 [INFO] [Memory] Increasing... (+25 MB) Total: 225 MB
+2026-05-31 07:31:35,575 [INFO] [CPU] Level 9 workload completed. Duration: 0.23s
+2026-05-31 07:31:36,577 [INFO] --- Step Info: Mode=UP, CPU Lv=10, Mem=225MB ---
+2026-05-31 07:31:36,615 [INFO] [Memory] Increasing... (+25 MB) Total: 250 MB
+2026-05-31 07:31:36,877 [INFO] [CPU] Level 10 workload completed. Duration: 0.26s
+2026-05-31 07:31:37,879 [INFO] --- Step Info: Mode=UP, CPU Lv=10, Mem=250MB ---
+2026-05-31 07:31:37,917 [INFO] [Memory] Increasing... (+25 MB) Total: 275 MB
+2026-05-31 07:31:38,173 [INFO] [CPU] Level 10 workload completed. Duration: 0.26s
+2026-05-31 07:31:39,175 [INFO] >>> PEAK REACHED. Switching to RAMP DOWN. <<<
+2026-05-31 07:31:39,176 [INFO] --- Step Info: Mode=DOWN, CPU Lv=9, Mem=275MB ---
+2026-05-31 07:31:39,176 [INFO] [Memory] Decreasing... (-25 MB) Total: 250 MB
+2026-05-31 07:31:39,407 [INFO] [CPU] Level 9 workload completed. Duration: 0.23s
+2026-05-31 07:31:40,409 [INFO] --- Step Info: Mode=DOWN, CPU Lv=8, Mem=250MB ---
+2026-05-31 07:31:40,411 [INFO] [Memory] Decreasing... (-25 MB) Total: 225 MB
+2026-05-31 07:31:40,623 [INFO] [CPU] Level 8 workload completed. Duration: 0.21s
+2026-05-31 07:31:41,625 [INFO] --- Step Info: Mode=DOWN, CPU Lv=7, Mem=225MB ---
+2026-05-31 07:31:41,625 [INFO] [Memory] Decreasing... (-25 MB) Total: 200 MB
+2026-05-31 07:31:41,815 [INFO] [CPU] Level 7 workload completed. Duration: 0.19s
+2026-05-31 07:31:42,817 [INFO] --- Step Info: Mode=DOWN, CPU Lv=6, Mem=200MB ---
+2026-05-31 07:31:42,819 [INFO] [Memory] Decreasing... (-25 MB) Total: 175 MB
+2026-05-31 07:31:42,978 [INFO] [CPU] Level 6 workload completed. Duration: 0.16s
+2026-05-31 07:31:43,980 [INFO] --- Step Info: Mode=DOWN, CPU Lv=5, Mem=175MB ---
+2026-05-31 07:31:43,980 [INFO] [Memory] Decreasing... (-25 MB) Total: 150 MB
+2026-05-31 07:31:44,112 [INFO] [CPU] Level 5 workload completed. Duration: 0.13s
+2026-05-31 07:31:45,114 [INFO] --- Step Info: Mode=DOWN, CPU Lv=4, Mem=150MB ---
+2026-05-31 07:31:45,116 [INFO] [Memory] Decreasing... (-25 MB) Total: 125 MB
+2026-05-31 07:31:45,222 [INFO] [CPU] Level 4 workload completed. Duration: 0.11s
+2026-05-31 07:31:46,223 [INFO] --- Step Info: Mode=DOWN, CPU Lv=3, Mem=125MB ---
+2026-05-31 07:31:46,224 [INFO] [Memory] Decreasing... (-25 MB) Total: 100 MB
+2026-05-31 07:31:46,303 [INFO] [CPU] Level 3 workload completed. Duration: 0.08s
+2026-05-31 07:31:47,304 [INFO] --- Step Info: Mode=DOWN, CPU Lv=2, Mem=100MB ---
+2026-05-31 07:31:47,306 [INFO] [Memory] Decreasing... (-25 MB) Total: 75 MB
+2026-05-31 07:31:47,359 [INFO] [CPU] Level 2 workload completed. Duration: 0.05s
+2026-05-31 07:31:48,362 [INFO] --- Step Info: Mode=DOWN, CPU Lv=1, Mem=75MB ---
+2026-05-31 07:31:48,362 [INFO] [Memory] Decreasing... (-25 MB) Total: 50 MB
+2026-05-31 07:31:48,395 [INFO] [CPU] Level 1 workload completed. Duration: 0.03s
+2026-05-31 07:31:49,395 [INFO] --- Step Info: Mode=DOWN, CPU Lv=0, Mem=50MB ---
+2026-05-31 07:31:49,398 [INFO] [Memory] Decreasing... (-25 MB) Total: 25 MB
+2026-05-31 07:31:50,398 [INFO] --- Step Info: Mode=DOWN, CPU Lv=0, Mem=25MB ---
+2026-05-31 07:31:50,398 [INFO] [Memory] Decreasing... (-25 MB) Total: 0 MB
+2026-05-31 07:31:51,400 [INFO] >>> BOTTOM REACHED (Idle). Switching to RAMP UP. <<<
+2026-05-31 07:31:51,401 [INFO] --- Step Info: Mode=UP, CPU Lv=1, Mem=0MB ---
+2026-05-31 07:31:51,403 [INFO] [Memory] Increasing... (+25 MB) Total: 25 MB
+2026-05-31 07:31:51,429 [INFO] [CPU] Level 1 workload completed. Duration: 0.03s
