@@ -15,7 +15,7 @@ LOG_MAX_SIZE=$((10 * 1024 * 1024))  # 10MB
 LOG_MAX_FILES=10
 
 check_process() {
-    pgrep -f "agent-app" > /dev/null
+    pgrep -f "$AGENT_HOME/agent-app$" > /dev/null
 }
 
 check_port() {
@@ -58,8 +58,9 @@ rotate_log() {
 
 # ===== Health Check (실패 시 exit 1) =====
 if ! check_process; then
-    echo "[${TIMESTAMP}] [ERROR] Process agent-app is not running" >> "$LOG_FILE"
-    exit 1
+    echo "[${TIMESTAMP}] [ERROR] Process agent-app is not running — restarting" >> "$LOG_FILE"
+    nohup "$AGENT_HOME/agent-app" >> "$AGENT_LOG_DIR/agent_app.log" 2>&1 &
+    exit 0
 fi
 
 if ! check_port; then
