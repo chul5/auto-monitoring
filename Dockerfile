@@ -72,5 +72,7 @@ RUN chown agent-admin:agent-common $AGENT_HOME && \
 # SSH 포트 노출
 EXPOSE 20022 15034
 
-# SSH 서버 시작
-CMD ["/usr/sbin/sshd", "-D", "-e"]
+# 컨테이너 시작 시 자동 설정 후 sshd 실행
+COPY ./src/entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+CMD ["/entrypoint.sh"]
