@@ -6,12 +6,11 @@
 
 | 구분 | 처리 위치 | 항목 | MISSION.md |
 |------|-----------|------|------------|
-| **Dockerfile** | 빌드 시 자동 | 패키지 설치, SSH 설정, 계정/그룹 생성, 디렉토리/권한, 환경변수, 비밀번호 | §4-1(SSH), §4-2, §4-3(환경변수) |
-| **setup.sh** | `docker-compose up` 후 1회 실행 | UFW 방화벽, API 키 파일, 앱 바이너리 배치, monitor.sh 배치, sudoers, crontab | §4-1(UFW), §4-2(키파일), §4-3(키파일), §4-4(cron) |
-| **수동** | 직접 수행 | 앱 실행 및 Boot Sequence 확인 | §4-3(앱 실행), §2-1 체크리스트 5 |
+| **Dockerfile** | 빌드 시 자동 | 패키지 설치, SSH 설정, 계정/그룹 생성, 디렉토리/권한/ACL, 환경변수, 비밀번호 | §4-1(SSH), §4-2, §4-3(환경변수) |
+| **entrypoint.sh** | 컨테이너 시작 시 자동 | UFW 방화벽, ACL(/var/log), API 키 파일, 앱 바이너리 배치, monitor.sh 배치, sudoers, crontab, 앱 기동 | §4-1(UFW), §4-2, §4-3, §4-4(cron) |
+| **수동** | 직접 수행 | Boot Sequence 확인, verification.sh 실행 | §2-1 체크리스트 5 |
 
-> **setup.sh 위치**: `src/setup.sh` (볼륨 마운트 → 컨테이너 내 `/home/agent-admin/src/setup.sh`)  
-> **UFW 주의**: UFW는 시스템 전역 서비스이므로 계정 전환 후에도 active 상태 유지. 단, 컨테이너 재시작 시 초기화되므로 setup.sh 재실행 필요.
+> **UFW 주의**: 컨테이너 재시작 시 entrypoint.sh가 자동 재설정하므로 별도 수동 실행 불필요.
 
 ---
 
@@ -25,8 +24,9 @@
 ├── docker-compose.yml
 ├── src/                         # 컨테이너에 마운트 (/home/agent-admin/src)
 │   ├── agent-app                # 제공 바이너리 (PyInstaller, Linux x86-64)
-│   ├── setup.sh                 # ← docker-compose up 후 1회 실행 스크립트
-│   └── monitor.sh               # ← 시스템 모니터링 스크립트 본체
+│   ├── entrypoint.sh            # ← 컨테이너 시작 시 자동 실행 (모든 설정 + 앱 기동)
+│   ├── monitor.sh               # ← 시스템 모니터링 스크립트 본체
+│   └── verification.sh          # ← 요구사항 검증 스크립트
 ├── logs/                        # 로그 영속성 (/var/log/agent-app) ← 반드시 사전 생성
 └── docs/
     ├── MISSION.md

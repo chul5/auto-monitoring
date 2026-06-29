@@ -30,6 +30,10 @@ echo "[entrypoint] sudoers 설정"
 echo "agent-admin ALL=(ALL) NOPASSWD: /usr/sbin/ufw status" > /etc/sudoers.d/agent-monitor
 chmod 440 /etc/sudoers.d/agent-monitor
 
+echo "[entrypoint] ACL 설정 (/var/log/agent-app — 볼륨 마운트 후 설정)"
+setfacl -m g:agent-core:rwx /var/log/agent-app
+setfacl -d -m g:agent-core:rwx /var/log/agent-app
+
 echo "[entrypoint] cron 서비스 시작 및 crontab 등록"
 service cron start
 MONITOR_CRON="* * * * * /home/agent-admin/agent-app/bin/monitor.sh"
