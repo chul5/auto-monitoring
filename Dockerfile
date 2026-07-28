@@ -70,13 +70,6 @@ RUN chown agent-admin:agent-common $AGENT_HOME && \
     chown -R agent-dev:agent-core $AGENT_HOME/api_keys && \
     chown -R agent-admin:agent-core $AGENT_LOG_DIR
 
-# ACL 설정 (upload_files: agent-common R/W / api_keys: agent-core only)
-# /var/log/agent-app은 볼륨 마운트 대상이므로 entrypoint.sh에서 설정
-RUN setfacl -m g:agent-common:rwx $AGENT_HOME/upload_files && \
-    setfacl -d -m g:agent-common:rwx $AGENT_HOME/upload_files && \
-    setfacl -m g:agent-core:rwx $AGENT_HOME/api_keys && \
-    setfacl -d -m g:agent-core:rwx $AGENT_HOME/api_keys
-
 # SSH 포트 노출
 EXPOSE 20022 15034
 

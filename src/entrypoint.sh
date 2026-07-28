@@ -30,10 +30,6 @@ echo "[entrypoint] sudoers 설정"
 echo "agent-admin ALL=(ALL) NOPASSWD: /usr/sbin/ufw status" > /etc/sudoers.d/agent-monitor
 chmod 440 /etc/sudoers.d/agent-monitor
 
-echo "[entrypoint] ACL 설정 (/var/log/agent-app — 볼륨 마운트 후 설정)"
-# macOS 볼륨 마운트(APFS)는 Linux POSIX ACL 미지원 → 실패해도 계속 진행
-setfacl -m g:agent-core:rwx /var/log/agent-app 2>/dev/null || echo "[entrypoint] [WARN] ACL not supported on /var/log/agent-app (host filesystem)"
-setfacl -d -m g:agent-core:rwx /var/log/agent-app 2>/dev/null || true
 
 echo "[entrypoint] cron 서비스 시작 및 crontab 등록"
 service cron start
