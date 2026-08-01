@@ -20,7 +20,7 @@ services:
     # 환경 변수
     environment:
       - AGENT_HOME=/home/agent-admin/agent-app
-      - AGENT_PORT=15035
+      - AGENT_PORT=15034
       - AGENT_LOG_DIR=/var/log/agent-app
     
     # 옵션
