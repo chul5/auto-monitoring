@@ -38,8 +38,8 @@ chmod 770 "$AGENT_LOG_DIR"
 echo "[setup] UFW 방화벽 설정"
 ufw default deny incoming
 ufw default allow outgoing
-ufw allow 20022/tcp
-ufw allow 15034/tcp
+ufw allow 20022/tcp              # SSH. sshd_config에 박힌 값이라 고정
+ufw allow "${AGENT_PORT}/tcp"    # APP. 환경변수로 관리하는 값이므로 변수를 그대로 사용
 ufw --force enable
 
 echo "[setup] API 키 파일 생성"
