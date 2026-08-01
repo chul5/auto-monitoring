@@ -225,6 +225,25 @@ source /etc/profile.d/agent-app.sh   # 수동으로 즉시 로드
 echo $AGENT_HOME                     # 환경변수 값 확인
 ```
 
+### 이 파일은 언제 만들어지는가
+
+`/etc/profile.d/agent-app.sh`는 **컨테이너가 뜰 때 setup.sh가 생성**합니다.
+Dockerfile에서 굽지 않는 이유는, 값을 두 군데서 관리하게 되기 때문입니다.
+
+```
+Dockerfile ENV          → 기본값
+docker-compose environment → 환경별로 덮어쓰는 값
+        ↓
+   컨테이너 환경변수 (최종 값)
+        ↓
+   setup.sh가 읽어서 /etc/profile.d/agent-app.sh 생성
+        ↓
+   cron · ssh 로그인 셸 · monitor.sh 가 전부 같은 값을 봄
+```
+
+빌드 시점에 구우면 compose로 값을 바꿔도 profile.d는 옛 값을 그대로 들고 있어서
+"컨테이너 환경변수는 A인데 로그인하면 B"인 상황이 생깁니다.
+
 ### cron에서 환경변수가 필요한 이유
 
 cron은 로그인 셸이 아니라서 `/etc/profile.d/`를 자동으로 읽지 않습니다.
@@ -319,10 +338,14 @@ monitor.sh에서 로그를 `>>`로 쓰는 이유가 여기에 있습니다. 이�
 ### 프로세스 확인 명령어
 
 ```bash
-pgrep -f "agent-app"
+pgrep -f "$AGENT_HOME/agent-app$"
 # -f: 프로세스 이름뿐 아니라 실행 명령어 전체에서 검색
 # 출력: 일치하는 프로세스의 PID 번호
 ```
+
+패턴을 전체 경로로 쓰고 끝에 `$`(문자열 끝)를 붙인 이유는 **오탐을 막기 위해서**입니다.
+`agent-app`이라고만 쓰면 `/var/log/agent-app` 같은 경로가 명령어에 들어간 다른 프로세스까지
+잡혀서, 앱이 죽었는데도 살아있다고 판단할 수 있습니다.
 
 ```bash
 pgrep -f "agent-app" | head -1
@@ -332,9 +355,10 @@ pgrep -f "agent-app" | head -1
 ### 포트 확인 명령어
 
 ```bash
-ss -tlnp | grep ":15034"
+ss -tlunp | grep ":15034"
 # ss: 소켓 상태 확인 도구 (netstat의 현대적 대체)
-# -t: TCP만 표시
+# -t: TCP 표시
+# -u: UDP 표시
 # -l: LISTEN(대기 중인) 소켓만 표시
 # -n: 포트를 숫자로 표시 (서비스 이름 대신)
 # -p: 어떤 프로세스가 사용 중인지 표시
@@ -350,9 +374,9 @@ tcp  LISTEN  0.0.0.0:15034  0.0.0.0:*  users:(("agent-app",pid=358))
 ### 백그라운드 실행
 
 ```bash
-nohup ./agent-app > /var/log/agent-app/agent-app.log 2>&1 &
+nohup ./agent-app >> /var/log/agent-app/agent_app.log 2>&1 &
 # nohup: 터미널이 닫혀도 프로세스 유지
-# > 파일: 표준 출력을 파일로 저장
+# >> 파일: 표준 출력을 파일에 이어쓰기 (재기동해도 이전 로그 보존)
 # 2>&1: 에러 출력도 같은 파일로
 # &: 백그라운드 실행
 ```
@@ -404,19 +428,30 @@ df / | tail -1 | awk '{print $5}' | tr -d '%'
 # tr -d '%': % 기호 제거
 ```
 
-### 소수점 비교 문제와 awk
+### 소수점 비교 문제와 bc
 
-셸에서는 기본적으로 소수점 비교가 안 됩니다.
+셸의 `[ ]`는 정수만 비교할 수 있습니다.
 `if [ 25.3 -gt 20 ]`는 에러가 납니다.
 
-그래서 awk를 사용합니다:
+그래서 `bc`를 사용합니다:
 
 ```bash
 if [ "$(echo "$CPU_USAGE > $CPU_THRESHOLD" | bc)" -eq 1 ]; then
     echo "[${TIMESTAMP}] [WARNING] CPU threshold exceeded (${CPU_USAGE}% > ${CPU_THRESHOLD}%)" >> "$LOG_FILE"
 fi
-측정값이 임계값을 넘으면 true(1) 위험알려줌
 ```
+
+`bc`는 비교식을 받으면 **참이면 1, 거짓이면 0**을 출력합니다.
+그 값을 `-eq 1`로 확인해서 임계값을 넘었을 때만 경고를 남깁니다.
+
+```bash
+echo "25.3 > 20" | bc    # → 1 (참)
+echo "0.0 > 20" | bc     # → 0 (거짓)
+```
+
+> `bc`는 기본 설치가 아닌 배포판이 있어서 Dockerfile의 apt 패키지 목록에 추가해두었습니다.
+>
+> DISK는 `df`가 정수 %만 주기 때문에 `bc` 없이 `[ "$DISK_USAGE" -gt "$DISK_THRESHOLD" ]`로 비교합니다.
 
 ---
 
@@ -523,6 +558,32 @@ monitor.log.10   ← 가장 오래된 로그 (이후 삭제)
 
 ## 11. setup.sh 명령어 해설
 
+### cat > 파일 <<EOF (히어독)
+
+```bash
+cat > /etc/profile.d/agent-app.sh <<EOF
+export AGENT_HOME=${AGENT_HOME}
+export AGENT_PORT=${AGENT_PORT}
+EOF
+```
+
+여러 줄을 한 번에 파일로 써넣는 문법입니다. `<<EOF` 다음 줄부터 `EOF`가 다시 나올 때까지가 내용이 됩니다.
+`${AGENT_HOME}` 같은 변수는 **쓰는 시점의 값으로 치환**되어 파일에 박힙니다.
+치환 없이 문자 그대로 남기고 싶으면 `<<'EOF'`처럼 따옴표를 붙입니다.
+
+### pkill과 || true
+
+```bash
+pkill -f "$AGENT_HOME/agent-app$" || true
+```
+
+`pkill`은 패턴에 맞는 프로세스를 종료합니다. `pgrep`과 옵션이 같습니다.
+
+문제는 **죽일 프로세스가 없으면 exit 1**을 반환한다는 점입니다.
+setup.sh 맨 위에 `set -e`가 있어서 그대로 두면 첫 기동(앱이 아직 없는 상태)에
+스크립트가 거기서 멈춰버립니다. `|| true`는 "앞이 실패해도 성공으로 친다"는 뜻으로,
+앱이 있든 없든 다음 단계로 넘어가게 해줍니다.
+
 ### source
 
 ```bash
@@ -530,16 +591,10 @@ source /etc/profile.d/agent-app.sh
 ```
 
 셸 스크립트를 **현재 셸 환경에 적용**합니다.
+setup.sh가 만들어둔 환경변수 파일을 monitor.sh가 이 명령으로 읽어들입니다.
+
 `bash 파일.sh`는 별도의 자식 셸에서 실행되어 변수가 현재 셸에 남지 않지만,
 `source`는 현재 셸에서 직접 실행하므로 변수가 현재 환경에 적용됩니다.
-
-### id -u
-
-```bash
-if [ "$(id -u)" -ne 0 ]; then
-```
-
-현재 사용자의 uid를 출력합니다. root는 uid=0이므로 `-ne 0`은 "root가 아니면"이라는 의미입니다.
 
 ### echo "내용" > 파일
 
@@ -601,19 +656,23 @@ echo "$MONITOR_CRON" | su - agent-admin -c 'crontab -'
 
 ```bash
 check_process() {
-    pgrep -f "agent-app" > /dev/null
+    pgrep -f "$AGENT_HOME/agent-app$" > /dev/null
 }
 ```
 
-`pgrep -f "agent-app"`: "agent-app"이라는 이름을 포함한 프로세스를 찾아 PID를 출력합니다.
+`pgrep -f`: 실행 명령어 전체에서 패턴에 맞는 프로세스를 찾아 PID를 출력합니다.
 `> /dev/null`: 출력 결과를 버립니다 (PID 숫자가 화면에 나오지 않게).
 프로세스가 있으면 exit 0(성공/참), 없으면 exit 1(실패/거짓)을 반환합니다.
+
+패턴이 단순히 `agent-app`이 아니라 **전체 경로 + `$`(문자열 끝)** 인 이유는,
+`/var/log/agent-app` 같은 문자열이 명령어에 들어간 무관한 프로세스까지 잡히면
+앱이 죽었는데도 살아있다고 오판하기 때문입니다.
 
 ### check_port()
 
 ```bash
 check_port() {
-    ss -tlnp | grep -q ":${AGENT_PORT}"
+    ss -tlunp | grep -q ":${AGENT_PORT}"
 }
 ```
 
