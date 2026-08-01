@@ -175,8 +175,18 @@ Dockerfile이 이미지라는 **'설계도'**를 만드는 과정이었다면, `
 
 ### 6. 우리 docker container생명주기와 sshd
 docker container의 생명주기는 PID 1로 결정된다.
-우리는 entrypoint.sh를 통해 최종적인 sshd를 생명주기로 갖고자 했음. (exec /usr/sbin/sshd -D -e)
-exec을 통해 PID 1의 프로세스를 현재 bash entrypoint.sh를 /usr/sbin/sshd -D -e 로 교체함
+우리는 최종적인 sshd를 생명주기로 갖고자 했음. (exec /usr/sbin/sshd -D -e)
+exec을 통해 PID 1의 프로세스를 bash에서 /usr/sbin/sshd -D -e 로 교체함
+
+이 exec은 Dockerfile의 CMD에 있다.
+CMD ["/bin/bash", "-c", "/setup.sh && exec /usr/sbin/sshd -D -e"]
+1. bash가 PID 1로 뜬다
+2. /setup.sh 를 자식 프로세스로 실행해서 런타임 설정을 마친다 (권한/UFW/cron/앱 기동)
+3. exec으로 bash 자신이 sshd로 교체된다 → sshd가 PID 1
+
+setup.sh 안에 exec을 두지 않은 이유는, "설정"과 "생명주기 결정"은 다른 책임이기 때문.
+setup.sh는 설정만 하고 정상 종료하고, 컨테이너가 무엇으로 살아있을지는 Dockerfile의 CMD가 결정한다.
+(setup.sh가 실패하면 && 때문에 sshd가 시작되지 않고 컨테이너가 죽는다 = fail fast)
 
 이유는 프로젝트에서 ssh 다중 계정 로그인이라는 명세를 지키기 위해서.
 
@@ -207,3 +217,14 @@ docker-compose : 여러 컨테이너를 한번에 띄울 수 있게 도와줌
 HOST커널에 대한 모든 권한을 준다는 뜻. ufw는 규칙을 커널에 쓰기 때문에, 호스트 커널에 권한이 없으면 실패.
 2. stdin_open: true
 3. tty: true
+
+### 10. awk 에서의 "", ''
+기본적으로 awk에 ''으로 주는 게 원칙이다. 하지만, 우리가 사용하는 변수를 먼저 해석하고 넘겨야할 때가 있다. 그 경우에 ""를 사용해서 변수를 치환한다음 awk에 넘긴다.
+#### 입력 데이터: hello world
+echo "hello world" | awk '{print $1}'
+해석 : awk를 통해 1열 문자열 출력
+출력 : hello
+#### 입력 데이터: hello world
+echo "hello world" | awk "{print $1}"
+해석 : awk '{print}'
+출력 : hello world

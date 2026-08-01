@@ -412,10 +412,10 @@ df / | tail -1 | awk '{print $5}' | tr -d '%'
 그래서 awk를 사용합니다:
 
 ```bash
-if awk "BEGIN{exit !($CPU_USAGE > $CPU_THRESHOLD)}"; then
-# awk BEGIN: 파일 없이 즉시 실행
-# exit !(조건): 조건이 참이면 exit 0(성공), 거짓이면 exit 1(실패)
-# if는 exit 0을 '참'으로 해석
+if [ "$(echo "$CPU_USAGE > $CPU_THRESHOLD" | bc)" -eq 1 ]; then
+    echo "[${TIMESTAMP}] [WARNING] CPU threshold exceeded (${CPU_USAGE}% > ${CPU_THRESHOLD}%)" >> "$LOG_FILE"
+fi
+측정값이 임계값을 넘으면 true(1) 위험알려줌
 ```
 
 ---

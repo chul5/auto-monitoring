@@ -19,7 +19,7 @@ check_process() {
 }
 
 check_port() {
-    ss -tlnp | grep -q ":${AGENT_PORT}"
+    ss -tlunp | grep -q ":${AGENT_PORT}"
 }
 
 check_firewall() {
@@ -79,11 +79,11 @@ MEMORY_USAGE=$(get_memory_usage)
 DISK_USAGE=$(get_disk_usage)
 
 # ===== 임계값 경고 =====
-if awk "BEGIN{exit !($CPU_USAGE > $CPU_THRESHOLD)}"; then
+if [ "$(echo "$CPU_USAGE > $CPU_THRESHOLD" | bc)" -eq 1 ]; then
     echo "[${TIMESTAMP}] [WARNING] CPU threshold exceeded (${CPU_USAGE}% > ${CPU_THRESHOLD}%)" >> "$LOG_FILE"
 fi
 
-if awk "BEGIN{exit !($MEMORY_USAGE > $MEM_THRESHOLD)}"; then
+if [ "$(echo "$MEMORY_USAGE > $MEM_THRESHOLD" | bc)" -eq 1 ]; then
     echo "[${TIMESTAMP}] [WARNING] MEM threshold exceeded (${MEMORY_USAGE}% > ${MEM_THRESHOLD}%)" >> "$LOG_FILE"
 fi
 

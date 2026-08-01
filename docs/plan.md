@@ -6,11 +6,13 @@
 
 | 구분 | 처리 위치 | 항목 | MISSION.md |
 |------|-----------|------|------------|
-| **Dockerfile** | 빌드 시 자동 | 패키지 설치, SSH 설정, 계정/그룹 생성, 디렉토리/권한/ACL, 환경변수, 비밀번호 | §4-1(SSH), §4-2, §4-3(환경변수) |
-| **entrypoint.sh** | 컨테이너 시작 시 자동 | UFW 방화벽, ACL(/var/log), API 키 파일, 앱 바이너리 배치, monitor.sh 배치, sudoers, crontab, 앱 기동 | §4-1(UFW), §4-2, §4-3, §4-4(cron) |
+| **Dockerfile** | 빌드 시 자동 | 패키지 설치, SSH 설정, 계정/그룹 생성, 디렉토리 **구조**, 환경변수, 비밀번호 | §4-1(SSH), §4-2, §4-3(환경변수) |
+| **setup.sh** | 컨테이너 시작 시 자동 | 디렉토리/파일 **권한 정책 전체**, UFW 방화벽, API 키 파일, 앱 바이너리 배치, monitor.sh 배치, sudoers, crontab, 앱 기동 | §4-1(UFW), §4-2, §4-3, §4-4(cron) |
 | **수동** | 직접 수행 | Boot Sequence 확인, verification.sh 실행 | §2-1 체크리스트 5 |
 
-> **UFW 주의**: 컨테이너 재시작 시 entrypoint.sh가 자동 재설정하므로 별도 수동 실행 불필요.
+> **UFW 주의**: 컨테이너 재시작 시 setup.sh가 자동 재설정하므로 별도 수동 실행 불필요.
+>
+> **권한이 Dockerfile이 아니라 setup.sh에 있는 이유**: `/var/log/agent-app`는 호스트 `./logs`를 바인드 마운트하므로, 빌드 시점에 설정한 권한이 컨테이너 시작 시 마운트로 덮인다. 마운트가 끝난 런타임에 적용해야 유효하다. 나머지 디렉토리도 정책을 한 파일에서 읽히도록 setup.sh로 모았다.
 
 ---
 
@@ -24,7 +26,7 @@
 ├── docker-compose.yml
 ├── src/                         # 컨테이너에 마운트 (/home/agent-admin/src)
 │   ├── agent-app                # 제공 바이너리 (PyInstaller, Linux x86-64)
-│   ├── entrypoint.sh            # ← 컨테이너 시작 시 자동 실행 (모든 설정 + 앱 기동)
+│   ├── setup.sh                 # ← 컨테이너 시작 시 자동 실행 (권한/방화벽/cron/앱 기동)
 │   ├── monitor.sh               # ← 시스템 모니터링 스크립트 본체
 │   └── verification.sh          # ← 요구사항 검증 스크립트
 ├── logs/                        # 로그 영속성 (/var/log/agent-app) ← 반드시 사전 생성

@@ -136,7 +136,7 @@ auto-monitoring/
 ├── docker-compose.yml      # 컨테이너 실행 설정
 ├── src/                    # 컨테이너에 볼륨 마운트 (/home/agent-admin/src)
 │   ├── agent-app           # 미션 제공 바이너리 (PyInstaller, Linux x86-64)
-│   ├── entrypoint.sh       # 컨테이너 시작 시 자동 실행 (UFW/ACL/cron/앱 기동)
+│   ├── setup.sh            # 컨테이너 시작 시 자동 실행 (권한/UFW/cron/앱 기동)
 │   ├── monitor.sh          # 시스템 모니터링 스크립트
 │   └── verification.sh     # 요구사항 검증 스크립트
 ├── logs/                   # 모니터링 로그 영속성 (/var/log/agent-app)
@@ -238,13 +238,13 @@ docker-compose ps
 # 컨테이너 접속
 docker-compose exec linux-practice bash
 
-# 컨테이너 접속 (entrypoint.sh가 UFW/ACL/cron/앱 기동을 자동 완료)
+# 컨테이너 접속 (setup.sh가 권한/UFW/cron/앱 기동을 자동 완료)
 docker-compose exec linux-practice bash
 ```
 
 #### Step 5: 설정 확인
 
-entrypoint.sh가 컨테이너 시작 시 자동으로 모든 설정을 완료합니다. 검증만 수행하면 됩니다.
+setup.sh가 컨테이너 시작 시 자동으로 모든 설정을 완료합니다. 검증만 수행하면 됩니다.
 
 ```bash
 # verification.sh로 요구사항 전체 검증
@@ -352,7 +352,7 @@ docker info | grep "Operating System"
 ├── docker-compose.yml      # 컨테이너 실행 설정
 ├── src/                    # 컨테이너에 볼륨 마운트 (/home/agent-admin/src)
 │   ├── agent-app           # 미션 제공 바이너리 (PyInstaller, Linux x86-64)
-│   ├── entrypoint.sh       # 컨테이너 시작 시 자동 실행 (UFW/ACL/cron/앱 기동)
+│   ├── setup.sh            # 컨테이너 시작 시 자동 실행 (권한/UFW/cron/앱 기동)
 │   ├── monitor.sh          # 시스템 모니터링 스크립트
 │   └── verification.sh     # 요구사항 검증 스크립트
 ├── logs/                   # 모니터링 로그 영속성 (/var/log/agent-app)
