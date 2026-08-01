@@ -20,13 +20,8 @@ services:
     # 환경 변수
     environment:
       - AGENT_HOME=/home/agent-admin/agent-app
-      - AGENT_PORT=15034
+      - AGENT_PORT=15035
       - AGENT_LOG_DIR=/var/log/agent-app
     
     # 옵션
     privileged: true                      # systemctl 사용
-    stdin_open: true
-    tty: true
-    
-    # 복구 정책
-    restart: unless-stopped

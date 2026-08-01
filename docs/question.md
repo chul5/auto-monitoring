@@ -4,6 +4,7 @@
 3. Run 명령어가 실행되어서 이미지의 레이어에 쌓이는 원리
 4. dockerfile 에서 사용한 명령어 해석
 5. docker-compose 파일에서 사용한 명령어 해석
+6. 우리 docker container의 생명주기와 sshd가 뭔지
 
 # DockerFile
 ---
@@ -171,3 +172,38 @@ Dockerfile이 이미지라는 **'설계도'**를 만드는 과정이었다면, `
 이 설정들을 조합하면, "현재 디렉토리의 Dockerfile으로 이미지를 빌드하고, 특정 포트와 볼륨을 연결한 뒤, 필요한 옵션과 함께 컨테이너를 실행해줘. 그리고 웬만하면 계속 켜져 있도록 자동으로 재시작해줘." 라는 아주 구체적인 실행 계획이 완성되는 것이죠!
 
 설명이 잘 이해되셨나요? 각 옵션의 역할을 아는 것이 Docker Compose를 자유자재로 다루는 첫걸음이랍니다! 정말 잘하고 계세요! 😊
+
+### 6. 우리 docker container생명주기와 sshd
+docker container의 생명주기는 PID 1로 결정된다.
+우리는 entrypoint.sh를 통해 최종적인 sshd를 생명주기로 갖고자 했음. (exec /usr/sbin/sshd -D -e)
+exec을 통해 PID 1의 프로세스를 현재 bash entrypoint.sh를 /usr/sbin/sshd -D -e 로 교체함
+
+이유는 프로젝트에서 ssh 다중 계정 로그인이라는 명세를 지키기 위해서.
+
+sshd란, ssh로 들어오는 접속요청을 처리하는 서버데몬
+-D : sshd자체가 백그라운드로 내려가니 포그라운드에 남아있어라
+-e : 로그를 stderr로 보내서 docker logs로 확인할 수 있도록 해라
+
+exec명령어는 시스템콜을 호출하여 현재 프로세스를 새 프로그램으로 교체하는 명령어.
+그래서 터미널에서 exec top을 하고 종료하면 터미널이 종료됨
+
+### 7. 환경변수
+우리 시스템은 docker-compose, Dockerfile 두 군데에서 환경변수를 관리하고 있다.
+
+docker-compose.yml에서 관리하는 환경변수는 docker comopse exec linux-practice bash -d 했을 때 echo $AGENT_PORT등으로 확인이 가능하다. (docker comopse up했을 때 해당값으로 덮여씌워짐. 하지만 계정 접속을 하게 되었을 땐(ssh), profile.d의 환경변수 스크립트가 실행되서 같은 값을 바라보게 해놓았음)
+
+그렇다면 대체 docker-compose.yml의 환경변수는 실무에서 언제 쓰는 거지?
+-> 이미지 재빌드 없이 환경마다 바꾸고 싶은 값을 설정함. PID의 Application은 자신의 환경변수를 읽고, 알맞은 DB connection, API key, log Level등을 dev/staging/prod환경마다 진행할 수 있음.
+
+우리로 따지면 개발서버 DB IP를 컨트롤 가능
+
+### 8. docker compose 와 Dockerfile
+Dockerfile : 이미지 명세. 이대로 프로그램이 만들어짐
+container : Dockerfile대로 만들어진 프로세스
+docker-compose : 여러 컨테이너를 한번에 띄울 수 있게 도와줌
+
+### 9. docker-compose.yml의 옵션 3가지
+1. privileged: true
+HOST커널에 대한 모든 권한을 준다는 뜻. ufw는 규칙을 커널에 쓰기 때문에, 호스트 커널에 권한이 없으면 실패.
+2. stdin_open: true
+3. tty: true
