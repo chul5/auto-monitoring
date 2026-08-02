@@ -462,6 +462,10 @@ echo "0.0 > 20" | bc     # → 0 (거짓)
 cron은 **정해진 시간에 자동으로 명령을 실행**해주는 스케줄러입니다.
 알람 앱처럼, "매일 오전 9시에 이 명령을 실행해"라고 등록해두면 알아서 실행합니다.
 
+등록한 계정별로 crontab이 관리됩니다. agent-admin 에서 등록했다면 root에서는 해당 크론텝이 돌지 않습니다.
+다만 이래서 발생할 수 있는 문제가, 같은 작업을 각 계정의 크론스케줄러로 동작시키면 같은 일을 두 번 할 수가 있습니다.
+따라서 이런 것을 방지하기 위해 /etc/cron.d/ 와 같은 전역 크론 디렉터리에서 깃으로 관리하는 방식을 사용합니다.
+
 ### crontab 문법
 
 ```
@@ -492,6 +496,7 @@ crontab -r          # 모든 crontab 삭제 (주의!)
 # 스크립트에서 비대화형으로 등록하는 방법
 echo "* * * * * /경로/명령어" | crontab -
 # | crontab -: 파이프로 받은 내용을 crontab에 등록
+# 우리 미션은 agent-admin이 등록하도록 해야하니까 파이프에 로그인을 하도록 연결해야한다.
 ```
 
 ### cron이 환경변수를 상속하지 않는 이유
@@ -518,6 +523,21 @@ cron은 비대화형 환경이라 `sudo` 실행 시 비밀번호 입력창을 �
 # /etc/sudoers.d/agent-monitor 내용:
 agent-admin ALL=(ALL) NOPASSWD: /usr/sbin/ufw status
 # agent-admin이 'ufw status'를 비밀번호 없이 실행 가능
+
+setup.sh에 crontab에 등록된 monitor.sh를 사용하기 위한 명령어를 정리한다.
+agent-admin   ALL   =(ALL)   NOPASSWD:   /usr/sbin/ufw status
+────┬─────    ─┬─    ──┬──   ────┬────   ──────────┬─────────
+    │          │       │         │                 │
+ 적용 대상   어느    어떤 사용자   비밀번호를      허용할 명령
+  사용자    호스트    자격으로     묻지 않음
+
+echo "$MONITOR_CRON" | su - agent-admin -c 'crontab -'
+                       ─┬ ┬  ────┬─────  ─┬  ───────┬
+                        │ │      │        │         └── crontab의 인자
+                        │ │      │        └── su의 옵션
+                        │ │      └── 전환할 대상 사용자
+                        │ └── 로그인 셸로 전환
+                        └── substitute user
 ```
 
 `chmod 440`: sudoers 파일은 실수로 수정되면 sudo가 완전히 망가질 수 있어서 쓰기 권한을 제거합니다.
