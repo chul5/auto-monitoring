@@ -72,7 +72,13 @@ service cron start
 MONITOR_CRON="* * * * * $AGENT_HOME/bin/monitor.sh"
 echo "$MONITOR_CRON" | su - agent-admin -c 'crontab -'
 
+# 앱 출력을 파일로 리다이렉트하지 않는다.
+# 앱은 $AGENT_LOG_DIR/agent_app.log를 직접 쓰고 회전까지 스스로 하므로,
+# 같은 파일로 stdout을 돌리면 (1) 로그가 두 줄씩 찍히고
+# (2) 앱이 회전시킨 뒤에도 셸의 fd가 옛 inode를 붙잡아 회전된 파일이 계속 부푼다.
+# 우리가 관리하는 로그는 monitor.log 하나뿐이고, 앱 로그는 앱에 맡긴다.
+# Boot Sequence 출력은 컨테이너 stdout으로 흘러 docker logs에서 확인한다.
 echo "[setup] agent-app 시작"
-su - agent-admin -c "nohup $AGENT_HOME/agent-app >> $AGENT_LOG_DIR/agent_app.log 2>&1 &"
+su - agent-admin -c "nohup $AGENT_HOME/agent-app &"
 
 echo "[setup] 설정 완료"
